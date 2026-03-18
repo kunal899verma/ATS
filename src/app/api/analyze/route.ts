@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from "next/server";
+import { analyzeResume } from "@/lib/ats-analyzer";
+
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MIN_RESUME_TEXT_LENGTH = 80;
+
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const file = formData.get("resume") as File | null;
+    const pastedText = formData.get("resumeText") as string | null;
+    const jobDescription = formData.get("jobDescription") as string | null;
+
+    // Job description is optional — general analysis mode when not provided
+    let resumeText = "";
+
+    // Option A: pasted text
+    if (pastedText && pastedText.trim().length >= MIN_RESUME_TEXT_LENGTH) {
+      resumeText = pastedText.trim();
+    }
+    // Option B: uploaded file
+    else if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: "File is too large. Maximum size is 5MB." },
+          { status: 413 }
+        );
+      }
+
+      const fileName = file.name.toLowerCase();
+      const fileType = file.type;
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
+        let parser;
+        try {
+          // pdf-parse v2 API: new PDFParse({ data: buffer }) + parser.getText()
+          const { PDFParse } = await import("pdf-parse") as { PDFParse: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }>; destroy(): Promise<void> } };
+          parser = new PDFParse({ data: buffer });
+          const data = await parser.getText();
+          resumeText = data.text;
+        } catch {
+          return NextResponse.json(
+            { error: "Failed to parse PDF. The file may be image-based or corrupted. Try copy-pasting your resume text instead." },
+            { status: 422 }
+          );
+        } finally {
+          try { await parser?.destroy(); } catch { /* ignore */ }
+        }
+      } else if (
+        fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        fileName.endsWith(".docx")
+      ) {
+        try {
+          const mammoth = await import("mammoth");
+          const result = await mammoth.extractRawText({ buffer });
+          resumeText = result.value;
+        } catch {
+          return NextResponse.json(
+            { error: "Failed to parse DOCX. Please try copy-pasting your resume text instead." },
+            { status: 422 }
+          );
+        }
+      } else if (fileType === "text/plain" || fileName.endsWith(".txt")) {
+        resumeText = buffer.toString("utf-8");
+      } else {
+        return NextResponse.json(
+          { error: "Unsupported file format. Please upload PDF, DOCX, or TXT — or paste your resume text directly." },
+          { status: 415 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: "Please upload a resume file or paste your resume text." },
+        { status: 400 }
+      );
+    }
+
+    // Validate extracted text
+    if (!resumeText || resumeText.trim().length < MIN_RESUME_TEXT_LENGTH) {
+      return NextResponse.json(
+        {
+          error:
+            "Could not extract enough text from the file. If your resume is a scanned image, please copy-paste the text content directly.",
+        },
+        { status: 422 }
+      );
+    }
+
+    // Sanitize: remove null bytes and excessive whitespace
+    const cleanResume = resumeText
+      .replace(/\0/g, "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\n{4,}/g, "\n\n")
+      .trim();
+
+    const cleanJD = jobDescription
+      ? jobDescription.replace(/\0/g, "").trim()
+      : "";
+
+    // Run analysis
+    const result = analyzeResume(cleanResume, cleanJD);
+
+    return NextResponse.json(
+      { success: true, result, resumeText: cleanResume },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Analysis-Version": "2.0",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("[ATS Analysis Error]", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred during analysis. Please try again." },
+      { status: 500 }
+    );
+  }
+}

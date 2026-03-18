@@ -1,0 +1,156 @@
+export const metadata = {
+  title: "ATS Resume Formatting: What Passes and What Gets Rejected",
+  description:
+    "Formatting mistakes cause ATS systems to misread or completely skip resume content. Here's exactly what formatting passes ATS and what gets your resume rejected before anyone reads it.",
+  publishedAt: "2026-03-10",
+  readingTime: "7 min read",
+  category: "Formatting",
+};
+
+Your resume content might be perfect. But if an ATS system can't parse it, none of that matters. This guide covers exactly which formatting choices pass ATS and which silently destroy your application.
+
+## Why formatting matters to ATS
+
+ATS systems extract your resume content through text parsing. They're looking for structured data: your name, contact info, work history, skills, education. They use this data to rank you.
+
+When your formatting breaks the parser:
+- Content gets merged incorrectly (experience bullets mixed with contact info)
+- Sections aren't recognized as sections
+- Keywords that exist in your resume aren't matched
+- Your score drops to near zero — not because of your experience, but because of your font choice
+
+The cruelest part: you'll never know it happened. The system just marks you as a low match.
+
+## What passes: ATS-safe formatting
+
+### Layout
+- **Single column** — everything on one vertical axis, top to bottom
+- **Clear section headers** — one line, all caps or bold, standard names
+- **Consistent bullet formatting** — dashes or dots, not fancy Unicode symbols
+- **White space** — enough to be readable, not so much it looks padded
+
+### Sections (use these exact names or close variants)
+- Contact Information (or just your name at the top)
+- Professional Summary (or Summary, Profile)
+- Work Experience (or Experience, Professional Experience)
+- Skills (or Technical Skills, Core Competencies)
+- Education
+- Optional: Projects, Certifications, Publications, Awards
+
+### File format
+- **DOCX** — the gold standard for ATS compatibility. Parses cleanly in virtually every system.
+- **Text-based PDF** — acceptable if exported from Word, Google Docs, or a standard text editor. Not acceptable if exported from a design tool.
+- **TXT** — technically the most parseable format, but formatting isn't preserved for human review
+
+### Fonts
+- Any standard system font: Arial, Calibri, Times New Roman, Helvetica, Georgia
+- Size: 10–12pt for body, 14–16pt for name, consistent throughout
+- No decorative or custom fonts
+
+### Contact information placement
+- Top of the document, in the main body (not in a Word header)
+- Include: name, email, phone, LinkedIn URL
+- Optional: city/state, GitHub URL, portfolio URL
+
+## What fails: formatting that breaks ATS
+
+### Tables
+Tables are one of the most common ATS killers. Most parsers either skip table content entirely or merge all cells into one long string of text.
+
+**Fails:**
+- Skills displayed in a 3-column table
+- Two-column layout achieved with a table
+- Experience with dates in one table column and descriptions in another
+
+**Fix:** Use simple text with spacing. No tables.
+
+### Text boxes
+Content in text boxes is completely invisible to many ATS parsers. This is catastrophic if you put your skills or summary in a text box.
+
+**Commonly placed in text boxes (all wrong):**
+- Side panel with contact info
+- Skills sidebar
+- Highlighted quote or callout
+
+### Headers and footers
+Contact information or section labels placed in the document header/footer are frequently stripped or ignored. Some ATS systems only parse the body of the document.
+
+**Fix:** Keep all content in the main document body.
+
+### Multi-column layouts
+Two-column resumes look professional. They're ATS disasters.
+
+Why: Parsers read text in order. If column 1 is your experience timeline and column 2 is your skills sidebar, the parser interleaves them — creating nonsense text like "Software Engineer 2022 Python JavaScript SQL Senior Developer 2019 React AWS Node.js."
+
+**Fix:** Single column, always.
+
+### Graphics and icons
+- Profile photos: stripped entirely, cause parsing issues
+- Icon-based skills ratings (★★★☆☆): completely ignored
+- Infographic-style sections: unparseable
+- Decorative dividers or lines as images: cause unpredictable behavior
+
+### Fancy bullets
+Unicode symbols, arrows (→), checkmarks (✓), and other decorative bullets often get parsed as question marks or stripped entirely.
+
+**Use:** Standard dashes (–), dots (•), or asterisks (*).
+
+### Canva, Figma, and design tool exports
+These tools create beautiful resumes. They are notoriously bad for ATS.
+
+Why: Design tools export to PDF using complex vector layouts. The text layer may not be in a parseable linear order. Some Canva templates output text that literally cannot be extracted by parsers.
+
+**If you've built your resume in Canva:** Create a plain text version for ATS submissions. Keep the designed version for in-person interviews or email attachments to contacts.
+
+## Quick ATS compatibility test
+
+1. Open your resume PDF in a text editor (or copy-paste into Notepad)
+2. Does the text flow logically from top to bottom?
+3. Is your contact info readable and separate from your experience?
+4. Are your section headers identifiable?
+5. Are your bullet points coherent sentences?
+
+If any of these fail — your ATS submission is failing too.
+
+Alternatively, run your resume through [ResumeATS](/analyze). We'll check ATS compatibility as part of the full analysis and tell you specifically what to fix.
+
+## The simplest ATS-safe resume template
+
+If you're unsure about your current format, here's the safest possible structure:
+
+```
+[FULL NAME]
+email@example.com | (555) 000-0000 | linkedin.com/in/yourname
+
+PROFESSIONAL SUMMARY
+2–3 sentences. Role-specific. Keyword-rich.
+
+WORK EXPERIENCE
+Job Title — Company Name (City, State)
+Month Year – Month Year (or Present)
+• Bullet point with achievement and metric
+• Bullet point with achievement and metric
+
+SKILLS
+Category: Skill 1, Skill 2, Skill 3
+
+EDUCATION
+Degree, Field of Study
+University Name, Graduation Year
+```
+
+This is boring. It passes every ATS system. It can be made visually professional with thoughtful typography while staying single-column. This is what you want.
+
+## Summary
+
+| What passes ATS | What fails ATS |
+|---|---|
+| Single column | Two columns |
+| Standard fonts | Decorative/custom fonts |
+| Text-based PDF or DOCX | Scanned PDF, Canva export |
+| Body text only | Headers, footers, text boxes |
+| Standard bullet points | Unicode symbols, arrows |
+| Simple section names | Creative section names |
+| No tables | Tables |
+
+Format first. Then optimize keywords. Then check your score with [ResumeATS](/analyze).
