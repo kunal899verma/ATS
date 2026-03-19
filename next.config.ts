@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pdf-parse", "mammoth"],
   turbopack: {},
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  images: {
+    remotePatterns: [
+      // Google profile pictures (OAuth sign-in avatars)
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+    ],
+  },
 };
 
 const withMDX = createMDX({

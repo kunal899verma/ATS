@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeResume } from "@/lib/ats-analyzer";
+import { auth } from "@/auth";
+import { trackAnalysis } from "@/lib/user-store";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -105,7 +107,20 @@ export async function POST(req: NextRequest) {
     // Run analysis
     const result = analyzeResume(cleanResume, cleanJD);
 
-    return NextResponse.json(
+    // Track analysis for signed-in users
+    const session = await auth();
+    if (session?.user?.email) {
+      await trackAnalysis({
+        email: session.user.email,
+        score: result.overallScore,
+        grade: result.grade,
+        detectedRole: result.detectedRole ?? "unknown",
+        inputMode: pastedText ? "paste" : "file",
+        analyzedAt: new Date().toISOString(),
+      });
+    }
+
+    const response = NextResponse.json(
       { success: true, result, resumeText: cleanResume },
       {
         headers: {
@@ -114,6 +129,15 @@ export async function POST(req: NextRequest) {
         },
       }
     );
+
+    // Mark free check as used (30-day cookie, readable by client JS for gate check)
+    response.cookies.set("ats_free_used", "1", {
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+      sameSite: "lax",
+    });
+
+    return response;
   } catch (error) {
     console.error("[ATS Analysis Error]", error);
     return NextResponse.json(

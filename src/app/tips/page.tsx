@@ -2,6 +2,10 @@ import Link from "next/link";
 import Navbar from "@/components/ui/Navbar";
 import { ArrowRight, CheckCircle2, XCircle, Zap, AlertTriangle, Target, Brain } from "lucide-react";
 import type { Metadata } from "next";
+import { FadeIn } from "@/components/ui/FadeIn";
+import { StaggerGroup, StaggerItem } from "@/components/ui/StaggerGroup";
+import { GlowCard } from "@/components/ui/GlowCard";
+import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
 
 export const metadata: Metadata = {
   title: "ATS Resume Tips — How to Beat Applicant Tracking Systems",
@@ -181,22 +185,25 @@ export default function TipsPage() {
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+        <FloatingOrbs count={3} />
 
         {/* Header */}
-        <div className="mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/5 text-cyan-400 text-xs font-medium mb-5">
-            <Brain className="w-3 h-3" />
-            Research-backed · Updated 2025
+        <FadeIn>
+          <div className="mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/5 text-cyan-400 text-xs font-medium mb-5">
+              <Brain className="w-3 h-3" />
+              Research-backed · Updated 2025
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-5 leading-tight">
+              How to beat ATS<br />
+              <span className="gradient-text">and get the callback.</span>
+            </h1>
+            <p className="text-slate-400 text-lg max-w-2xl leading-relaxed">
+              75% of resumes never reach a human. Here&apos;s exactly what separates the ones that do —
+              keyword strategies, formatting rules, and the myths that are actively hurting your score.
+            </p>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-5 leading-tight">
-            How to beat ATS<br />
-            <span className="gradient-text">and get the callback.</span>
-          </h1>
-          <p className="text-slate-400 text-lg max-w-2xl leading-relaxed">
-            75% of resumes never reach a human. Here&apos;s exactly what separates the ones that do —
-            keyword strategies, formatting rules, and the myths that are actively hurting your score.
-          </p>
-        </div>
+        </FadeIn>
 
         {/* Quick wins */}
         <div className="glass rounded-2xl border border-emerald-500/15 bg-emerald-500/3 p-6 mb-12">
@@ -219,32 +226,40 @@ export default function TipsPage() {
           const SectionIcon = section.icon;
           return (
             <div key={section.category} className="mb-12">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className={`w-8 h-8 rounded-lg ${section.iconBg} flex items-center justify-center`}>
-                  <SectionIcon className={`w-4 h-4 ${section.iconText}`} />
-                </div>
-                <h2 className="text-2xl font-bold text-white">{section.category}</h2>
-              </div>
-
-              <div className="space-y-5">
-                {section.items.map((tip, idx) => (
-                  <div key={idx} className={`glass rounded-2xl border ${section.border} p-6`}>
-                    <h3 className="text-white font-semibold text-[15px] mb-2">{tip.title}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed mb-4">{tip.desc}</p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="rounded-xl bg-emerald-500/6 border border-emerald-500/15 p-3.5">
-                        <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider mb-2">✓ Do this</p>
-                        <p className="text-slate-300 text-xs leading-relaxed font-mono">{tip.good}</p>
-                      </div>
-                      <div className="rounded-xl bg-red-500/5 border border-red-500/15 p-3.5">
-                        <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-2">✗ Not this</p>
-                        <p className="text-slate-400 text-xs leading-relaxed font-mono">{tip.bad}</p>
-                      </div>
-                    </div>
+              <FadeIn direction="left">
+                <div className="flex items-center gap-2.5 mb-6">
+                  <div className={`w-8 h-8 rounded-lg ${section.iconBg} flex items-center justify-center`}>
+                    <SectionIcon className={`w-4 h-4 ${section.iconText}`} />
                   </div>
-                ))}
-              </div>
+                  <h2 className="text-2xl font-bold text-white">{section.category}</h2>
+                </div>
+              </FadeIn>
+
+              <StaggerGroup stagger={0.08}>
+                <div className="space-y-5">
+                  {section.items.map((tip, idx) => (
+                    <StaggerItem key={idx}>
+                      <GlowCard glow={section.color as "cyan" | "violet" | "pink"}>
+                        <div className={`glass rounded-2xl border ${section.border} p-6`}>
+                          <h3 className="text-white font-semibold text-[15px] mb-2">{tip.title}</h3>
+                          <p className="text-slate-400 text-sm leading-relaxed mb-4">{tip.desc}</p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="rounded-xl bg-emerald-500/6 border border-emerald-500/15 p-3.5">
+                              <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider mb-2">✓ Do this</p>
+                              <p className="text-slate-300 text-xs leading-relaxed font-mono">{tip.good}</p>
+                            </div>
+                            <div className="rounded-xl bg-red-500/5 border border-red-500/15 p-3.5">
+                              <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-2">✗ Not this</p>
+                              <p className="text-slate-400 text-xs leading-relaxed font-mono">{tip.bad}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </GlowCard>
+                    </StaggerItem>
+                  ))}
+                </div>
+              </StaggerGroup>
             </div>
           );
         })}
@@ -258,33 +273,39 @@ export default function TipsPage() {
             <h2 className="text-2xl font-bold text-white">ATS Myths That Are Hurting You</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {MYTHS.map((m) => (
-              <div key={m.myth} className="glass rounded-2xl border border-white/7 p-5">
-                <div className="flex items-start gap-2 mb-2">
-                  <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-400 font-semibold text-sm">&quot;{m.myth}&quot;</p>
-                </div>
-                <p className="text-slate-400 text-sm leading-relaxed pl-6">{m.reality}</p>
-              </div>
-            ))}
-          </div>
+          <StaggerGroup>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {MYTHS.map((m) => (
+                <StaggerItem key={m.myth}>
+                  <div className="glass rounded-2xl border border-white/7 p-5">
+                    <div className="flex items-start gap-2 mb-2">
+                      <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-red-400 font-semibold text-sm">&quot;{m.myth}&quot;</p>
+                    </div>
+                    <p className="text-slate-400 text-sm leading-relaxed pl-6">{m.reality}</p>
+                  </div>
+                </StaggerItem>
+              ))}
+            </div>
+          </StaggerGroup>
         </div>
 
         {/* CTA */}
-        <div className="glass rounded-2xl border border-cyan-500/20 bg-cyan-500/3 p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">Put these tips to the test</h2>
-          <p className="text-slate-400 mb-7 max-w-md mx-auto">
-            Apply one tip, re-analyze your resume, and see your score move. Free, no account required.
-          </p>
-          <Link
-            href="/analyze"
-            className="btn-primary inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold group"
-          >
-            Check My Resume Now
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
+        <FadeIn direction="up">
+          <div className="glass rounded-2xl border border-cyan-500/20 bg-cyan-500/3 p-8 text-center">
+            <h2 className="text-2xl font-bold text-white mb-3">Put these tips to the test</h2>
+            <p className="text-slate-400 mb-7 max-w-md mx-auto">
+              Apply one tip, re-analyze your resume, and see your score move. Free, no account required.
+            </p>
+            <Link
+              href="/analyze"
+              className="btn-primary inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold group"
+            >
+              Check My Resume Now
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </FadeIn>
       </div>
 
       {/* Footer */}

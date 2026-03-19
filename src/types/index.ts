@@ -132,6 +132,57 @@ export interface Suggestion {
   example?: string;
   impact: number;          // estimated score improvement if fixed (1–15)
   effort: "easy" | "medium" | "hard";
+  // Deep analysis additions
+  currentText?: string;    // actual problematic text extracted from resume
+  improvedText?: string;   // suggested rewrite
+  timeNeeded?: string;     // "2 min", "10 min", "30 min"
+}
+
+// ─── Deep Analysis (line-by-line intelligence) ────────────────────────────────
+export interface ContactIssue {
+  field: "email" | "phone" | "linkedin" | "github" | "portfolio";
+  issue: string;
+  currentValue: string;
+  suggestedValue: string;
+  scoreImpact: number;
+}
+
+export interface BulletQuality {
+  text: string;
+  score: number;           // 0–100
+  hasActionVerb: boolean;
+  hasMetric: boolean;
+  weakStarter?: string;    // "responsible for", "worked on", etc.
+  improvedVersion?: string;
+}
+
+export interface DeepAnalysis {
+  contact: {
+    score: number;
+    issues: ContactIssue[];
+  };
+  summary: {
+    wordCount: number;
+    score: number;
+    genericPhrasesFound: string[];
+    weakLanguageFound: string[];
+    actionVerbsFound: string[];
+    extractedText: string;
+  };
+  bullets: {
+    total: number;
+    withMetrics: number;
+    withActionVerbs: number;
+    weakBullets: BulletQuality[];
+    avgScore: number;
+  };
+  layout: {
+    decorativeCharsFound: string[];
+    pipeCount: number;
+    allCapsLinesCount: number;
+    score: number;
+    issues: string[];
+  };
 }
 
 // ─── AI Suggestion Types ──────────────────────────────────────────────────────
@@ -207,4 +258,5 @@ export interface ATSResult {
   competitiveLevel: "top_10" | "top_25" | "average" | "below_average" | "needs_work";
   detectedRole: RoleType;
   careerIntelligence?: CareerIntelligence;
+  deepAnalysis?: DeepAnalysis;
 }

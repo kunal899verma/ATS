@@ -19,6 +19,7 @@
 
 import { findKeywordInText } from "./synonyms";
 import { buildCareerIntelligence } from "./career-intelligence";
+import { runDeepAnalysis, buildDeepSuggestions } from "./deep-analyzer";
 import type {
   RoleType,
   ATSResult,
@@ -236,6 +237,16 @@ export function analyzeResume(resumeText: string, jobDescription: string): ATSRe
   // 11. Career intelligence
   const careerIntelligence = buildCareerIntelligence(resumeText, detectedRole);
 
+  // 12. Deep analysis (line-by-line contact/bullet/summary/layout)
+  const deepAnalysis = runDeepAnalysis(resumeText);
+  const deepSuggestions = buildDeepSuggestions(deepAnalysis);
+
+  // Merge deep suggestions with existing ones, re-sort, cap at 12
+  const priorityOrder: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+  const mergedSuggestions = [...suggestions, ...deepSuggestions]
+    .sort((a, b) => (priorityOrder[b.priority] ?? 0) - (priorityOrder[a.priority] ?? 0) || b.impact - a.impact)
+    .slice(0, 12);
+
   return {
     overallScore,
     grade,
@@ -244,11 +255,12 @@ export function analyzeResume(resumeText: string, jobDescription: string): ATSRe
     keywordAnalysis,
     formatAnalysis,
     recruiterScore,
-    suggestions,
+    suggestions: mergedSuggestions,
     summary,
     competitiveLevel,
     detectedRole,
     careerIntelligence,
+    deepAnalysis,
   };
 }
 

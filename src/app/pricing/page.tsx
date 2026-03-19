@@ -5,6 +5,10 @@ import {
   BarChart3, Brain, Target, FileSearch, Sparkles,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { FadeIn } from "@/components/ui/FadeIn";
+import { StaggerGroup, StaggerItem } from "@/components/ui/StaggerGroup";
+import { GlowCard } from "@/components/ui/GlowCard";
+import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
 
 export const metadata: Metadata = {
   title: "Pricing — ResumeATS Free ATS Resume Checker",
@@ -33,7 +37,7 @@ const COMPARISON = [
   { feature: "Score history", us: true, jobscan: false, resumeWorded: false },
   { feature: "Share results", us: true, jobscan: false, resumeWorded: false },
   { feature: "Print / export report", us: true, jobscan: false, resumeWorded: true },
-  { feature: "No account required", us: true, jobscan: false, resumeWorded: false },
+  { feature: "No account required", us: true, jobscan: false, resumeWorked: false },
   { feature: "Completely free", us: true, jobscan: false, resumeWorded: false },
 ];
 
@@ -59,22 +63,25 @@ export default function PricingPage() {
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+        <FloatingOrbs count={4} />
 
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/5 text-emerald-400 text-xs font-medium mb-6">
-            <Zap className="w-3 h-3" />
-            Always free. No credit card. No account.
+        <FadeIn>
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/5 text-emerald-400 text-xs font-medium mb-6">
+              <Zap className="w-3 h-3" />
+              Always free. No credit card. No account.
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-5 leading-tight">
+              Built to level the{" "}
+              <span className="gradient-text">playing field.</span>
+            </h1>
+            <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
+              Job searching is already hard enough. Resume tools shouldn&apos;t cost $50/month.
+              ResumeATS is free — not a &quot;freemium&quot; with 3 free scans. Actually free.
+            </p>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-5 leading-tight">
-            Built to level the{" "}
-            <span className="gradient-text">playing field.</span>
-          </h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
-            Job searching is already hard enough. Resume tools shouldn&apos;t cost $50/month.
-            ResumeATS is free — not a &quot;freemium&quot; with 3 free scans. Actually free.
-          </p>
-        </div>
+        </FadeIn>
 
         {/* Pricing cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16">
@@ -87,39 +94,47 @@ export default function PricingPage() {
                 <Star className="w-3 h-3 fill-white" /> BEST VALUE
               </div>
             </div>
-            <div className="glass rounded-2xl border border-cyan-500/30 p-7 h-full relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-violet-500/5 pointer-events-none" />
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-violet-600 flex items-center justify-center">
-                    <Zap className="w-3.5 h-3.5 text-white" />
+            <FadeIn delay={0.2}>
+              <GlowCard glow="cyan">
+                <div className="glass rounded-2xl border border-cyan-500/30 p-7 h-full relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-violet-500/5 pointer-events-none" />
+                  <div className="relative">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-violet-600 flex items-center justify-center">
+                        <Zap className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="text-white font-bold text-lg">ResumeATS</span>
+                    </div>
+                    <div className="mt-4 mb-6">
+                      <span className="text-5xl font-black text-white">$0</span>
+                      <span className="text-slate-400 text-sm ml-2">/ forever</span>
+                    </div>
+                    <StaggerGroup stagger={0.06}>
+                      <ul className="space-y-3 mb-8">
+                        {FREE_FEATURES.map((f) => {
+                          const Icon = f.icon;
+                          return (
+                            <StaggerItem key={f.text}>
+                              <li className="flex items-start gap-2.5 text-sm text-slate-300">
+                                <Icon className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                                {f.text}
+                              </li>
+                            </StaggerItem>
+                          );
+                        })}
+                      </ul>
+                    </StaggerGroup>
+                    <Link
+                      href="/analyze"
+                      className="btn-primary w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold"
+                    >
+                      Start Free Analysis
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
-                  <span className="text-white font-bold text-lg">ResumeATS</span>
                 </div>
-                <div className="mt-4 mb-6">
-                  <span className="text-5xl font-black text-white">$0</span>
-                  <span className="text-slate-400 text-sm ml-2">/ forever</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {FREE_FEATURES.map((f) => {
-                    const Icon = f.icon;
-                    return (
-                      <li key={f.text} className="flex items-start gap-2.5 text-sm text-slate-300">
-                        <Icon className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-                        {f.text}
-                      </li>
-                    );
-                  })}
-                </ul>
-                <Link
-                  href="/analyze"
-                  className="btn-primary w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold"
-                >
-                  Start Free Analysis
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
+              </GlowCard>
+            </FadeIn>
           </div>
 
           {/* Competitors column */}
@@ -188,38 +203,40 @@ export default function PricingPage() {
         </div>
 
         {/* Feature comparison table */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Full Feature Comparison</h2>
-          <div className="glass rounded-2xl border border-white/8 overflow-hidden">
-            <div className="grid grid-cols-4 border-b border-white/5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              <div className="p-4 col-span-2">Feature</div>
-              <div className="p-4 text-center text-cyan-400">ResumeATS</div>
-              <div className="p-4 text-center">Competitors</div>
-            </div>
-            {COMPARISON.map((row, i) => (
-              <div
-                key={row.feature}
-                className={`grid grid-cols-4 text-sm ${i < COMPARISON.length - 1 ? "border-b border-white/4" : ""} hover:bg-white/2 transition-colors`}
-              >
-                <div className="p-4 col-span-2 text-slate-300">{row.feature}</div>
-                <div className="p-4 flex justify-center">
-                  {row.us ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  ) : (
-                    <XCircle className="w-4 h-4 text-red-400/50" />
-                  )}
-                </div>
-                <div className="p-4 flex justify-center">
-                  {(row.jobscan || row.resumeWorded) ? (
-                    <CheckCircle2 className="w-4 h-4 text-slate-500" />
-                  ) : (
-                    <XCircle className="w-4 h-4 text-red-400/50" />
-                  )}
-                </div>
+        <FadeIn delay={0.1}>
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">Full Feature Comparison</h2>
+            <div className="glass rounded-2xl border border-white/8 overflow-hidden">
+              <div className="grid grid-cols-4 border-b border-white/5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <div className="p-4 col-span-2">Feature</div>
+                <div className="p-4 text-center text-cyan-400">ResumeATS</div>
+                <div className="p-4 text-center">Competitors</div>
               </div>
-            ))}
+              {COMPARISON.map((row, i) => (
+                <div
+                  key={row.feature}
+                  className={`grid grid-cols-4 text-sm ${i < COMPARISON.length - 1 ? "border-b border-white/4" : ""} hover:bg-white/2 transition-colors`}
+                >
+                  <div className="p-4 col-span-2 text-slate-300">{row.feature}</div>
+                  <div className="p-4 flex justify-center">
+                    {row.us ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-red-400/50" />
+                    )}
+                  </div>
+                  <div className="p-4 flex justify-center">
+                    {(row.jobscan || row.resumeWorded) ? (
+                      <CheckCircle2 className="w-4 h-4 text-slate-500" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-red-400/50" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </FadeIn>
 
         {/* Why free? */}
         <div className="glass rounded-2xl border border-violet-500/15 bg-violet-500/3 p-7 mb-16">
@@ -243,22 +260,26 @@ export default function PricingPage() {
         {/* Testimonials */}
         <div className="mb-16">
           <h2 className="text-2xl font-bold text-white mb-8 text-center">What people say about switching</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="glass rounded-2xl p-6 border border-white/6">
-                <div className="flex gap-0.5 mb-3">
-                  {Array.from({ length: t.stars }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-slate-300 text-sm leading-relaxed mb-4">&quot;{t.text}&quot;</p>
-                <div>
-                  <p className="text-white text-sm font-medium">{t.name}</p>
-                  <p className="text-slate-500 text-xs">{t.role}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <StaggerGroup>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {TESTIMONIALS.map((t) => (
+                <StaggerItem key={t.name}>
+                  <div className="glass rounded-2xl p-6 border border-white/6">
+                    <div className="flex gap-0.5 mb-3">
+                      {Array.from({ length: t.stars }).map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      ))}
+                    </div>
+                    <p className="text-slate-300 text-sm leading-relaxed mb-4">&quot;{t.text}&quot;</p>
+                    <div>
+                      <p className="text-white text-sm font-medium">{t.name}</p>
+                      <p className="text-slate-500 text-xs">{t.role}</p>
+                    </div>
+                  </div>
+                </StaggerItem>
+              ))}
+            </div>
+          </StaggerGroup>
         </div>
 
         {/* Final CTA */}

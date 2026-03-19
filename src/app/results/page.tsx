@@ -4,19 +4,23 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
+import ScoreConfetti from "@/components/ui/ScoreConfetti";
 import { track } from "@vercel/analytics";
 import Navbar from "@/components/ui/Navbar";
 import ScoreRing from "@/components/ui/ScoreRing";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { useHistory } from "@/hooks/useHistory";
 import type { ATSResult, Suggestion, SectionScore, AIResponse } from "@/types";
+import type { GitHubAnalysis } from "@/app/api/github/route";
 import { EXPERIENCE_LABELS, EXPERIENCE_COLORS } from "@/lib/career-intelligence";
 import {
   ArrowLeft, CheckCircle2, XCircle, AlertTriangle, TrendingUp,
   Zap, RefreshCw, ChevronDown, ChevronUp, Loader2, Info,
   Sparkles, AlertCircle, Users, Share2, Printer, Clock,
   BarChart3, History, X, Wand2, Copy, CheckCheck,
-  BookOpen, Target, Star, Lightbulb, ArrowRight, Trophy,
+  BookOpen, Target, Star, Lightbulb, ArrowRight, Trophy, Code2, ExternalLink,
 } from "lucide-react";
 
 // Dynamically import recharts charts (avoids hydration mismatch)
@@ -80,6 +84,14 @@ export default function ResultsPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [githubData, setGithubData] = useState<GitHubAnalysis | null>(null);
+  const [scoreRevealed, setScoreRevealed] = useState(false);
+  const [displayScore, setDisplayScore] = useState(0);
+
+  useEffect(() => {
+    const ghRaw = sessionStorage.getItem("atsGithubData");
+    if (ghRaw) { try { setGithubData(JSON.parse(ghRaw)); } catch { /* ignore */ } }
+  }, []);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("atsResult");
@@ -103,6 +115,18 @@ export default function ResultsPage() {
         });
         setSavedToHistory(true);
       }
+
+      // Trigger score reveal after a short delay
+      setTimeout(() => {
+        setScoreRevealed(true);
+        const obj = { val: 0 };
+        gsap.to(obj, {
+          val: parsed.overallScore,
+          duration: 1.8,
+          ease: "power3.out",
+          onUpdate: () => setDisplayScore(Math.round(obj.val)),
+        });
+      }, 300);
     } catch {
       router.push("/analyze");
     }
@@ -189,10 +213,14 @@ export default function ResultsPage() {
   if (loading || !result) {
     return (
       <div className="min-h-screen bg-[#020817] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
           <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
           <p className="text-slate-400 text-sm">Loading results...</p>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -311,16 +339,31 @@ export default function ResultsPage() {
           <div className="flex flex-col lg:flex-row items-center gap-8">
             {/* Score ring */}
             <div className="flex-shrink-0">
-              <ScoreRing score={result.overallScore} size={180} grade={result.grade} />
+              <div className="relative">
+                <ScoreConfetti trigger={scoreRevealed} />
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, type: "spring", stiffness: 120, delay: 0.1 }}
+                >
+                  <ScoreRing score={displayScore || result.overallScore} size={180} grade={result.grade} />
+                </motion.div>
+              </div>
             </div>
 
             {/* Score context + breakdown mini */}
             <div className="flex-1 text-center lg:text-left w-full">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                <span className="text-2xl">{ctx.level}</span>
-                <h2 className={`text-2xl font-bold ${ctx.color}`}>{ctx.headline}</h2>
-              </div>
-              <p className="text-slate-400 text-[15px] mb-6 leading-relaxed">{ctx.subtext}</p>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                  <span className="text-2xl">{ctx.level}</span>
+                  <h2 className={`text-2xl font-bold ${ctx.color}`}>{ctx.headline}</h2>
+                </div>
+                <p className="text-slate-400 text-[15px] mb-6 leading-relaxed">{ctx.subtext}</p>
+              </motion.div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {[
@@ -417,6 +460,16 @@ export default function ResultsPage() {
             );
           })}
         </div>
+
+        {/* ── Tab panels (animated) ────────────────────────────────────── */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+          >
 
         {/* ── Tab: Overview ───────────────────────────────────────────────── */}
         {activeTab === "overview" && (
@@ -659,63 +712,153 @@ export default function ResultsPage() {
               </div>
             )}
 
-            {/* Summary bar */}
-            {result.suggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {(["critical", "high", "medium", "low"] as const).map((p) => {
-                  const count = result.suggestions.filter((s) => s.priority === p).length;
-                  if (!count) return null;
-                  const cfg = PRIORITY_CONFIG[p];
-                  return (
-                    <div key={p} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${cfg.bg} border ${cfg.border}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                      <span className={`text-xs font-medium ${cfg.color}`}>{count} {cfg.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {result.suggestions.length > 0 && (() => {
+              const quickWins = result.suggestions.filter(
+                (s) => s.timeNeeded && (s.timeNeeded.includes("1 min") || s.timeNeeded.includes("2 min") || s.timeNeeded.includes("5 min"))
+              );
+              const totalEstGain = result.suggestions.reduce((sum, s) => sum + s.impact, 0);
 
-            {result.suggestions.map((s: Suggestion) => {
-              const cfg = PRIORITY_CONFIG[s.priority];
-              const isOpen = expandedSuggestion === s.id;
               return (
-                <div key={s.id} className={`glass rounded-2xl border ${cfg.border} overflow-hidden`}>
-                  <button
-                    className="w-full flex items-start gap-4 p-5 text-left hover:bg-white/2 transition-colors"
-                    onClick={() => setExpandedSuggestion(isOpen ? null : s.id)}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${cfg.dot} flex-shrink-0 mt-2`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                        <span className={`text-[11px] font-semibold uppercase tracking-wider ${cfg.color}`}>{cfg.label}</span>
-                        <span className="text-slate-600 text-[11px]">·</span>
-                        <span className="text-slate-500 text-[11px]">{s.category}</span>
-                        <span className="text-slate-600 text-[11px]">·</span>
-                        <span className={`text-[11px] ${EFFORT_COLOR[s.effort]}`}>{EFFORT_LABEL[s.effort]}</span>
-                        <span className="ml-auto text-emerald-400/70 text-[11px]">+{s.impact} pts est.</span>
-                      </div>
-                      <h3 className="text-white font-semibold text-[15px]">{s.title}</h3>
+                <>
+                  {/* ── Score Impact Banner ─────────────────────────── */}
+                  <div className="glass rounded-2xl border border-white/8 p-4 flex flex-wrap items-center gap-4">
+                    <div className="flex-1">
+                      <p className="text-white font-semibold text-sm">Fix all issues → up to +{totalEstGain} pts</p>
+                      <p className="text-slate-500 text-xs mt-0.5">
+                        {result.suggestions.filter(s => s.priority === "critical").length} critical ·{" "}
+                        {result.suggestions.filter(s => s.priority === "high").length} high ·{" "}
+                        {result.suggestions.filter(s => s.priority === "medium").length} medium issues
+                      </p>
                     </div>
-                    <div className="flex-shrink-0 mt-1">
-                      {isOpen ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+                    <div className="flex flex-wrap gap-2">
+                      {(["critical", "high", "medium", "low"] as const).map((p) => {
+                        const count = result.suggestions.filter((s) => s.priority === p).length;
+                        if (!count) return null;
+                        const cfg = PRIORITY_CONFIG[p];
+                        return (
+                          <div key={p} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${cfg.bg} border ${cfg.border}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            <span className={`text-xs font-medium ${cfg.color}`}>{count} {cfg.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </button>
+                  </div>
 
-                  {isOpen && (
-                    <div className={`px-5 pb-5 border-t ${cfg.border} ${cfg.bg} pt-4`}>
-                      <p className="text-slate-300 text-sm leading-relaxed">{s.description}</p>
-                      {s.example && (
-                        <div className="mt-4 p-3.5 rounded-xl bg-black/30 border border-white/5">
-                          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">Example</p>
-                          <p className="text-slate-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{s.example}</p>
-                        </div>
-                      )}
+                  {/* ── Quick Wins ──────────────────────────────────── */}
+                  {quickWins.length > 0 && (
+                    <div className="glass rounded-2xl border border-emerald-500/20 bg-emerald-500/3 overflow-hidden">
+                      <div className="flex items-center gap-2 px-5 py-3 border-b border-emerald-500/15">
+                        <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-300 font-semibold text-sm">Quick Wins</span>
+                        <span className="text-slate-500 text-xs ml-1">— fixes under 5 min each</span>
+                      </div>
+                      <div className="divide-y divide-emerald-500/10">
+                        {quickWins.map((s) => (
+                          <div key={s.id} className="flex items-center gap-3 px-5 py-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                            <p className="text-slate-300 text-sm flex-1">{s.title}</p>
+                            <span className="text-emerald-400/70 text-xs flex-shrink-0">+{s.impact} pts</span>
+                            <span className="text-slate-600 text-xs flex-shrink-0">{s.timeNeeded}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                </div>
+
+                  {/* ── Full Suggestion Cards ────────────────────────── */}
+                  <motion.div
+                    className="contents"
+                    variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+                    initial="hidden"
+                    animate="show"
+                  >
+                  {result.suggestions.map((s: Suggestion) => {
+                    const cfg = PRIORITY_CONFIG[s.priority];
+                    const isOpen = expandedSuggestion === s.id;
+                    const hasBeforeAfter = !!(s.currentText && s.improvedText);
+                    return (
+                      <motion.div
+                        key={s.id}
+                        variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                        transition={{ duration: 0.35 }}
+                      >
+                      <div className={`glass rounded-2xl border ${cfg.border} overflow-hidden`}>
+                        <button
+                          className="w-full flex items-start gap-4 p-5 text-left hover:bg-white/2 transition-colors"
+                          onClick={() => setExpandedSuggestion(isOpen ? null : s.id)}
+                        >
+                          <div className={`w-2 h-2 rounded-full ${cfg.dot} flex-shrink-0 mt-2`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                              <span className={`text-[11px] font-semibold uppercase tracking-wider ${cfg.color}`}>{cfg.label}</span>
+                              <span className="text-slate-600 text-[11px]">·</span>
+                              <span className="text-slate-500 text-[11px]">{s.category}</span>
+                              <span className="text-slate-600 text-[11px]">·</span>
+                              <span className={`text-[11px] ${EFFORT_COLOR[s.effort]}`}>{EFFORT_LABEL[s.effort]}</span>
+                              {s.timeNeeded && (
+                                <>
+                                  <span className="text-slate-600 text-[11px]">·</span>
+                                  <span className="text-slate-500 text-[11px]">{s.timeNeeded}</span>
+                                </>
+                              )}
+                              {hasBeforeAfter && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Before/After</span>
+                              )}
+                              <span className="ml-auto text-emerald-400/70 text-[11px]">+{s.impact} pts est.</span>
+                            </div>
+                            <h3 className="text-white font-semibold text-[15px]">{s.title}</h3>
+                          </div>
+                          <div className="flex-shrink-0 mt-1">
+                            {isOpen ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+                          </div>
+                        </button>
+
+                        {isOpen && (
+                          <div className={`px-5 pb-5 border-t ${cfg.border} ${cfg.bg} pt-4 space-y-4`}>
+                            <p className="text-slate-300 text-sm leading-relaxed">{s.description}</p>
+
+                            {/* Before / After */}
+                            {hasBeforeAfter && (
+                              <div className="rounded-xl overflow-hidden border border-white/8">
+                                <div className="flex items-center gap-2 px-4 py-2 bg-red-500/8 border-b border-white/5">
+                                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                                  <span className="text-red-400 text-[11px] font-semibold uppercase tracking-wider">Current (problematic)</span>
+                                </div>
+                                <div className="px-4 py-3 bg-black/20">
+                                  <p className="text-slate-300 text-sm font-mono leading-relaxed whitespace-pre-wrap">{s.currentText}</p>
+                                </div>
+                                <div className="flex items-center justify-center py-2 border-y border-white/5 bg-white/2">
+                                  <ArrowRight className="w-4 h-4 text-slate-600" />
+                                  <span className="text-slate-600 text-[11px] ml-1">Suggested fix</span>
+                                </div>
+                                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/8 border-b border-white/5">
+                                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                  <span className="text-emerald-400 text-[11px] font-semibold uppercase tracking-wider">Improved version</span>
+                                </div>
+                                <div className="px-4 py-3 bg-black/20">
+                                  <p className="text-slate-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{s.improvedText}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Generic example (no before/after) */}
+                            {!hasBeforeAfter && s.example && (
+                              <div className="p-3.5 rounded-xl bg-black/30 border border-white/5">
+                                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">Example</p>
+                                <p className="text-slate-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{s.example}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      </motion.div>
+                    );
+                  })}
+                  </motion.div>
+                </>
               );
-            })}
+            })()}
           </div>
         )}
 
@@ -1008,6 +1151,60 @@ export default function ResultsPage() {
                 </>
               );
             })()}
+          </div>
+        )}
+
+          </motion.div>
+        </AnimatePresence>
+
+        {/* ── GitHub Profile Card ──────────────────────────────────────────── */}
+        {githubData && (
+          <div className="mt-6 glass rounded-2xl border border-emerald-500/20 overflow-hidden print:hidden">
+            <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-white/5">
+              <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-white font-semibold text-sm">GitHub Profile</h3>
+                <p className="text-slate-500 text-[11px]">@{githubData.username}</p>
+              </div>
+              <a href={githubData.profileUrl} target="_blank" rel="noopener noreferrer"
+                className="text-slate-500 hover:text-emerald-400 transition-colors mr-3">
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <div className="text-right">
+                <div className="text-emerald-400 font-bold text-xl leading-none">{githubData.score}</div>
+                <div className="text-slate-600 text-[10px]">/100</div>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="h-2 rounded-full bg-white/5 mb-4">
+                <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500"
+                  style={{ width: `${githubData.score}%` }} />
+              </div>
+              <div className="grid grid-cols-4 gap-3 mb-4">
+                {[
+                  { label: "Repos", value: githubData.stats.originalRepos },
+                  { label: "Followers", value: githubData.stats.followers },
+                  { label: "Stars ★", value: githubData.stats.totalStars },
+                  { label: "Languages", value: githubData.stats.languages.length },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-xl bg-white/3 border border-white/5 p-3 text-center">
+                    <div className="text-emerald-400 font-bold text-base">{s.value}</div>
+                    <div className="text-slate-500 text-[11px]">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {githubData.stats.languages.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {githubData.stats.languages.slice(0, 8).map((lang) => (
+                    <span key={lang} className="px-2 py-0.5 rounded-md text-xs bg-emerald-500/8 text-emerald-300 border border-emerald-500/15">
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

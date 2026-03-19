@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import Providers from "@/components/Providers";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -43,7 +45,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col font-[var(--font-inter)]">
-        {children}
+        <Providers>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </Providers>
         <Analytics />
       </body>
     </html>

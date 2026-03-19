@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
 import Navbar from "@/components/ui/Navbar";
 import type { ATSResult } from "@/types";
+import type { RoleType } from "@/types";
 import { ROLE_LABELS, ROLE_COLORS } from "@/types";
 import {
   Upload, X, Loader2, Users, TrendingUp, BarChart3,
   FileText, Download, Eye, ChevronUp, ChevronDown,
-  CheckCircle2, AlertCircle, Zap, Target,
+  CheckCircle2, AlertCircle, Zap, Target, SlidersHorizontal,
+  GitCompare, CheckSquare, Square,
 } from "lucide-react";
 
 interface CandidateState {
@@ -67,6 +71,12 @@ export default function RecruiterPage() {
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [isDragging, setIsDragging] = useState(false);
+  // Filter + compare
+  const [filterMinScore, setFilterMinScore] = useState(0);
+  const [filterRole, setFilterRole] = useState<RoleType | "all">("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showComparison, setShowComparison] = useState(false);
 
   const addFiles = useCallback(
     (newFiles: File[]) => {
@@ -192,6 +202,22 @@ export default function RecruiterPage() {
     return mul * a.name.localeCompare(b.name);
   });
 
+  const filteredDone = sortedDone.filter((c) => {
+    if (c.result!.overallScore < filterMinScore) return false;
+    if (filterRole !== "all" && c.result!.detectedRole !== filterRole) return false;
+    return true;
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else if (next.size < 3) next.add(id);
+      return next;
+    });
+  };
+
+  const comparedCandidates = filteredDone.filter((c) => selectedIds.has(c.id));
+
   const avgScore =
     done.length > 0
       ? Math.round(done.reduce((s, c) => s + c.result!.overallScore, 0) / done.length)
@@ -202,23 +228,32 @@ export default function RecruiterPage() {
       : null;
 
   return (
-    <main className="min-h-screen bg-[#020817]">
+    <main className="min-h-screen bg-[#020817] relative">
       <Navbar />
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
 
+      {/* Change 10: FloatingOrbs background */}
+      <FloatingOrbs count={3} />
+
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
 
-        {/* Header */}
-        <div className="mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/25 bg-violet-500/5 text-violet-400 text-xs font-medium mb-5">
-            <Users className="w-3 h-3" />
-            Recruiter Dashboard · Batch Analysis
+        {/* Change 2: Animated page header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/25 bg-violet-500/5 text-violet-400 text-xs font-medium mb-5">
+              <Users className="w-3 h-3" />
+              Recruiter Dashboard · Batch Analysis
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Rank candidates in minutes</h1>
+            <p className="text-slate-400 text-[15px]">
+              Upload up to {MAX_FILES} resumes, optionally add a job description, and get a ranked leaderboard instantly.
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Rank candidates in minutes</h1>
-          <p className="text-slate-400 text-[15px]">
-            Upload up to {MAX_FILES} resumes, optionally add a job description, and get a ranked leaderboard instantly.
-          </p>
-        </div>
+        </motion.div>
 
         {/* Upload + JD row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
@@ -233,25 +268,33 @@ export default function RecruiterPage() {
               <span className="ml-auto text-slate-500 text-xs">{candidates.length} / {MAX_FILES}</span>
             </div>
             <div className="p-5">
-              <div
-                className={`upload-zone rounded-xl p-8 text-center cursor-pointer mb-4 ${isDragging ? "dragging" : ""}`}
-                onDrop={handleDrop}
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => addFiles(Array.from(e.target.files ?? []))}
-                />
-                <Upload className="w-8 h-8 text-violet-400 mx-auto mb-3" />
-                <p className="text-white font-medium mb-1">Drop multiple resumes here</p>
-                <p className="text-slate-500 text-sm">or click to browse · PDF, DOCX, TXT · up to {MAX_FILES} files</p>
-              </div>
+              {/* Change 3: Animated upload/drop zone */}
+              <motion.div whileHover={{ scale: 1.01 }}>
+                <div
+                  className={`upload-zone rounded-xl p-8 text-center cursor-pointer mb-4 ${isDragging ? "dragging" : ""}`}
+                  style={{
+                    boxShadow: isDragging
+                      ? "0 0 40px rgba(6,182,212,0.3), inset 0 0 40px rgba(6,182,212,0.05)"
+                      : "none",
+                  }}
+                  onDrop={handleDrop}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => addFiles(Array.from(e.target.files ?? []))}
+                  />
+                  <Upload className="w-8 h-8 text-violet-400 mx-auto mb-3" />
+                  <p className="text-white font-medium mb-1">Drop multiple resumes here</p>
+                  <p className="text-slate-500 text-sm">or click to browse · PDF, DOCX, TXT · up to {MAX_FILES} files</p>
+                </div>
+              </motion.div>
 
               {candidates.length > 0 && (
                 <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
@@ -276,8 +319,14 @@ export default function RecruiterPage() {
                           {c.result.overallScore}
                         </span>
                       )}
+                      {/* Change 6: Animated analyzing indicator */}
                       {c.status === "analyzing" && (
-                        <Loader2 className="w-3 h-3 text-cyan-400 animate-spin flex-shrink-0" />
+                        <motion.div
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <Loader2 className="w-3 h-3 text-cyan-400 animate-spin flex-shrink-0" />
+                        </motion.div>
                       )}
                       {c.status === "error" && (
                         <span className="text-red-400 text-[11px] truncate max-w-[120px]">{c.error}</span>
@@ -374,8 +423,13 @@ export default function RecruiterPage() {
         {/* Results section */}
         {done.length > 0 && (
           <>
-            {/* Summary stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {/* Change 7: Animated summary stats */}
+            <motion.div
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5"
+              variants={{ show: { transition: { staggerChildren: 0.1 } } }}
+              initial="hidden"
+              animate="show"
+            >
               {[
                 { label: "Ranked", value: done.length, icon: Users, color: "text-violet-400" },
                 {
@@ -389,27 +443,60 @@ export default function RecruiterPage() {
               ].map((stat) => {
                 const Icon = stat.icon;
                 return (
-                  <div key={stat.label} className="glass rounded-2xl p-4 border border-white/8">
+                  <motion.div
+                    key={stat.label}
+                    variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                    className="glass rounded-2xl p-4 border border-white/8"
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <Icon className={`w-3.5 h-3.5 ${stat.color}`} />
                       <span className="text-slate-500 text-[11px]">{stat.label}</span>
                     </div>
                     <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
+
+            {/* Compare button — floats above table when ≥2 selected */}
+            {selectedIds.size >= 2 && (
+              <div className="mb-3 flex justify-end">
+                <button
+                  onClick={() => setShowComparison(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 text-sm font-medium hover:bg-violet-500/25 transition-colors"
+                >
+                  <GitCompare className="w-4 h-4" />
+                  Compare {selectedIds.size} Candidates
+                </button>
+              </div>
+            )}
 
             {/* Rankings table */}
             <div className="glass rounded-2xl border border-white/8 overflow-hidden">
               {/* Table controls */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 border-b border-white/5">
                 <h2 className="text-white font-semibold flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-violet-400" />
                   Candidate Ranking
-                  <span className="text-slate-600 text-xs font-normal">({sortedDone.length})</span>
+                  <span className="text-slate-600 text-xs font-normal">
+                    ({filteredDone.length}{filteredDone.length !== done.length ? ` of ${done.length}` : ""})
+                  </span>
                 </h2>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowFilters((v) => !v)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+                      showFilters || filterMinScore > 0 || filterRole !== "all"
+                        ? "bg-violet-500/15 border-violet-500/25 text-violet-300"
+                        : "btn-ghost border-white/8"
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Filters
+                    {(filterMinScore > 0 || filterRole !== "all") && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                    )}
+                  </button>
                   <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-white/5 border border-white/5">
                     {(["score", "name"] as const).map((s) => (
                       <button
@@ -434,89 +521,158 @@ export default function RecruiterPage() {
                 </div>
               </div>
 
-              {/* Rows */}
-              <div className="divide-y divide-white/4">
-                {sortedDone.map((c, i) => {
-                  const r = c.result!;
-                  const rc = ROLE_COLORS[r.detectedRole];
-                  return (
-                    <div
-                      key={c.id}
-                      className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-5 py-4 hover:bg-white/2 transition-colors"
-                    >
-                      {/* Rank */}
-                      <div
-                        className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border ${
-                          i === 0 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
-                          i === 1 ? "bg-slate-400/15 text-slate-300 border-slate-400/20" :
-                          i === 2 ? "bg-orange-700/15 text-orange-500 border-orange-700/25" :
-                                    "bg-white/5 text-slate-500 border-white/8"
-                        }`}
-                      >
-                        {i + 1}
+              {/* Change 8: Animated filter panel */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <div className="px-5 py-4 border-b border-white/5 bg-white/1 flex flex-wrap items-center gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+                        <label className="text-slate-400 text-xs whitespace-nowrap">Min Score</label>
+                        <input
+                          type="range" min={0} max={90} step={5}
+                          value={filterMinScore}
+                          onChange={(e) => setFilterMinScore(Number(e.target.value))}
+                          className="flex-1 accent-violet-500"
+                        />
+                        <span className="text-white text-xs font-semibold w-6 text-right">{filterMinScore}</span>
                       </div>
-
-                      {/* Name + role badge */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium text-sm truncate">{c.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${rc.bg} ${rc.text} ${rc.border}`}>
-                            {ROLE_LABELS[r.detectedRole]}
-                          </span>
-                          <span className="text-slate-600 text-[11px] truncate">{c.file.name}</span>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-slate-400 text-xs">Role</label>
+                        <select
+                          value={filterRole}
+                          onChange={(e) => setFilterRole(e.target.value as RoleType | "all")}
+                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-slate-300 text-xs focus:outline-none focus:border-violet-500/40"
+                        >
+                          <option value="all">All Roles</option>
+                          {(Object.entries(ROLE_LABELS) as [RoleType, string][]).map(([k, v]) => (
+                            <option key={k} value={k}>{v}</option>
+                          ))}
+                        </select>
                       </div>
-
-                      {/* Score */}
-                      <div className="flex-shrink-0 text-center w-14">
-                        <div className={`text-2xl font-bold leading-none ${getScoreColor(r.overallScore)}`}>
-                          {r.overallScore}
-                        </div>
-                        <div className="text-slate-600 text-[10px]">/100</div>
-                      </div>
-
-                      {/* Grade */}
-                      <div className="flex-shrink-0">
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getGradeBg(r.grade)}`}>
-                          {r.grade}
-                        </span>
-                      </div>
-
-                      {/* Match % */}
-                      <div className="flex-shrink-0 text-center w-14">
-                        <div className="text-sm font-semibold text-slate-300">
-                          {r.keywordAnalysis.overallMatchRate}%
-                        </div>
-                        <div className="text-slate-600 text-[10px]">match</div>
-                      </div>
-
-                      {/* Gaps */}
-                      <div className="flex-1 flex flex-wrap gap-1 min-w-0 max-w-[200px]">
-                        {r.keywordAnalysis.topMissingKeywords.slice(0, 3).map((kw) => (
-                          <span
-                            key={kw}
-                            className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/8 text-red-400 border border-red-500/15 truncate max-w-[80px]"
-                          >
-                            {kw}
-                          </span>
-                        ))}
-                        {r.keywordAnalysis.topMissingKeywords.length === 0 && (
-                          <span className="text-emerald-400 text-[11px] flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> No gaps
-                          </span>
-                        )}
-                      </div>
-
-                      {/* View report */}
-                      <button
-                        onClick={() => handleViewReport(c)}
-                        className="btn-ghost flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs flex-shrink-0"
-                      >
-                        <Eye className="w-3.5 h-3.5" /> Report
-                      </button>
+                      {(filterMinScore > 0 || filterRole !== "all") && (
+                        <button
+                          onClick={() => { setFilterMinScore(0); setFilterRole("all"); }}
+                          className="text-slate-500 hover:text-red-400 text-xs transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </div>
-                  );
-                })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Change 4: AnimatePresence + layout for candidate rows */}
+              <div className="divide-y divide-white/4">
+                <AnimatePresence mode="popLayout">
+                  {filteredDone.map((c, i) => {
+                    const r = c.result!;
+                    const rc = ROLE_COLORS[r.detectedRole];
+                    return (
+                      <motion.div
+                        key={c.id}
+                        layout
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20, height: 0 }}
+                        transition={{ duration: 0.3, layout: { duration: 0.2 } }}
+                      >
+                        <div
+                          className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-5 py-4 hover:bg-white/2 transition-colors ${selectedIds.has(c.id) ? "bg-violet-500/4" : ""}`}
+                        >
+                          {/* Checkbox */}
+                          <button
+                            onClick={() => toggleSelect(c.id)}
+                            className={`flex-shrink-0 transition-colors ${selectedIds.has(c.id) ? "text-violet-400" : "text-slate-600 hover:text-slate-400"}`}
+                            title={selectedIds.size >= 3 && !selectedIds.has(c.id) ? "Max 3 candidates" : "Select to compare"}
+                          >
+                            {selectedIds.has(c.id)
+                              ? <CheckSquare className="w-4 h-4" />
+                              : <Square className="w-4 h-4" />
+                            }
+                          </button>
+
+                          {/* Rank */}
+                          <div
+                            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border ${
+                              i === 0 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
+                              i === 1 ? "bg-slate-400/15 text-slate-300 border-slate-400/20" :
+                              i === 2 ? "bg-orange-700/15 text-orange-500 border-orange-700/25" :
+                                        "bg-white/5 text-slate-500 border-white/8"
+                            }`}
+                          >
+                            {i + 1}
+                          </div>
+
+                          {/* Name + role badge */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-medium text-sm truncate">{c.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${rc.bg} ${rc.text} ${rc.border}`}>
+                                {ROLE_LABELS[r.detectedRole]}
+                              </span>
+                              <span className="text-slate-600 text-[11px] truncate">{c.file.name}</span>
+                            </div>
+                          </div>
+
+                          {/* Score */}
+                          <div className="flex-shrink-0 text-center w-14">
+                            <div className={`text-2xl font-bold leading-none ${getScoreColor(r.overallScore)}`}>
+                              {r.overallScore}
+                            </div>
+                            <div className="text-slate-600 text-[10px]">/100</div>
+                          </div>
+
+                          {/* Grade */}
+                          <div className="flex-shrink-0">
+                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getGradeBg(r.grade)}`}>
+                              {r.grade}
+                            </span>
+                          </div>
+
+                          {/* Match % */}
+                          <div className="flex-shrink-0 text-center w-14">
+                            <div className="text-sm font-semibold text-slate-300">
+                              {r.keywordAnalysis.overallMatchRate}%
+                            </div>
+                            <div className="text-slate-600 text-[10px]">match</div>
+                          </div>
+
+                          {/* Gaps */}
+                          <div className="flex-1 flex flex-wrap gap-1 min-w-0 max-w-[200px]">
+                            {r.keywordAnalysis.topMissingKeywords.slice(0, 3).map((kw) => (
+                              <span
+                                key={kw}
+                                className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/8 text-red-400 border border-red-500/15 truncate max-w-[80px]"
+                              >
+                                {kw}
+                              </span>
+                            ))}
+                            {r.keywordAnalysis.topMissingKeywords.length === 0 && (
+                              <span className="text-emerald-400 text-[11px] flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> No gaps
+                              </span>
+                            )}
+                          </div>
+
+                          {/* View report */}
+                          <button
+                            onClick={() => handleViewReport(c)}
+                            className="btn-ghost flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs flex-shrink-0"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Report
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
 
               {errorCount > 0 && (
@@ -529,6 +685,152 @@ export default function RecruiterPage() {
           </>
         )}
       </div>
+
+      {/* Change 9: Animated comparison modal */}
+      <AnimatePresence>
+        {showComparison && comparedCandidates.length >= 2 && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-16 pb-8 bg-black/70 backdrop-blur-sm overflow-y-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="w-full max-w-5xl glass rounded-2xl border border-white/8 shadow-2xl"
+              initial={{ opacity: 0, scale: 0.93, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-white/8">
+                <h2 className="text-white font-bold text-lg flex items-center gap-2">
+                  <GitCompare className="w-5 h-5 text-violet-400" />
+                  Candidate Comparison
+                </h2>
+                <button
+                  onClick={() => setShowComparison(false)}
+                  className="text-slate-500 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Comparison grid */}
+              <div className="p-6 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <td className="text-slate-500 text-xs uppercase tracking-wider pb-4 pr-4 w-36">Metric</td>
+                      {comparedCandidates.map((c) => {
+                        const rc = ROLE_COLORS[c.result!.detectedRole];
+                        return (
+                          <th key={c.id} className="pb-4 px-4 text-left">
+                            <p className="text-white font-semibold truncate">{c.name}</p>
+                            <span className={`inline-flex mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${rc.bg} ${rc.text} ${rc.border}`}>
+                              {ROLE_LABELS[c.result!.detectedRole]}
+                            </span>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {/* Overall Score */}
+                    <tr>
+                      <td className="py-3 pr-4 text-slate-500 text-xs">Overall Score</td>
+                      {comparedCandidates.map((c) => (
+                        <td key={c.id} className="py-3 px-4">
+                          <span className={`text-2xl font-bold ${getScoreColor(c.result!.overallScore)}`}>
+                            {c.result!.overallScore}
+                          </span>
+                          <span className="text-slate-600 text-xs">/100</span>
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Grade */}
+                    <tr>
+                      <td className="py-3 pr-4 text-slate-500 text-xs">Grade</td>
+                      {comparedCandidates.map((c) => (
+                        <td key={c.id} className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getGradeBg(c.result!.grade)}`}>
+                            {c.result!.grade}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Keyword Match */}
+                    <tr>
+                      <td className="py-3 pr-4 text-slate-500 text-xs">Keyword Match</td>
+                      {comparedCandidates.map((c) => (
+                        <td key={c.id} className="py-3 px-4 text-slate-300 font-medium">
+                          {c.result!.keywordAnalysis.overallMatchRate}%
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Section scores */}
+                    {["contact", "summary", "experience", "skills", "education"].map((sec) => (
+                      <tr key={sec}>
+                        <td className="py-3 pr-4 text-slate-500 text-xs capitalize">{sec}</td>
+                        {comparedCandidates.map((c) => {
+                          const s = (c.result!.sections as unknown as Record<string, { score: number }>)[sec];
+                          const score = s?.score ?? 0;
+                          return (
+                            <td key={c.id} className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                {/* Change 5: Animated score bar */}
+                                <div className="flex-1 h-1.5 rounded-full bg-white/8 max-w-[80px] overflow-hidden">
+                                  <motion.div
+                                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-500"
+                                    style={{ width: 0 }}
+                                    animate={{ width: `${score}%` }}
+                                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                                  />
+                                </div>
+                                <span className="text-slate-400 text-xs">{score}</span>
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                    {/* Missing keywords */}
+                    <tr>
+                      <td className="py-3 pr-4 text-slate-500 text-xs align-top pt-4">Missing Keywords</td>
+                      {comparedCandidates.map((c) => (
+                        <td key={c.id} className="py-3 px-4 align-top">
+                          <div className="flex flex-wrap gap-1">
+                            {c.result!.keywordAnalysis.topMissingKeywords.slice(0, 5).map((kw) => (
+                              <span key={kw} className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/8 text-red-400 border border-red-500/15">
+                                {kw}
+                              </span>
+                            ))}
+                            {c.result!.keywordAnalysis.topMissingKeywords.length === 0 && (
+                              <span className="text-emerald-400 text-[11px]">No gaps</span>
+                            )}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="px-6 pb-5 flex gap-3 justify-end border-t border-white/5 pt-4">
+                {comparedCandidates.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleViewReport(c)}
+                    className="btn-ghost flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs"
+                  >
+                    <Eye className="w-3.5 h-3.5" /> {c.name.split(" ")[0]}&apos;s Report
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
