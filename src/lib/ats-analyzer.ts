@@ -486,7 +486,7 @@ function buildKeywordAnalysis(
 
 // ─── Format Analysis ──────────────────────────────────────────────────────────
 
-function analyzeFormat(resumeText: string, _resumeLower: string): FormatAnalysis {
+function analyzeFormat(resumeText: string): FormatAnalysis {
   const bulletCount = (resumeText.match(/^[\s]*[•\-\*\>▪▸◦–—]/gm) || []).length;
   const quantifiedCount = (
     resumeText.match(/\d+%|\$[\d,]+|\d+x\b|\d+\+?\s+(million|thousand|users|customers|engineers|projects|team|members|countries|markets|systems|clients|months|weeks)/gi) || []

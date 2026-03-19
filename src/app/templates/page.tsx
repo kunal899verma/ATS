@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import Navbar from "@/components/ui/Navbar";
@@ -93,8 +93,12 @@ export default function TemplatesPage() {
   });
   const [previewScale, setPreviewScale] = useState(0.6);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const previewWrapRef = useRef<HTMLDivElement>(null);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   // Compute scale based on wrapper width
   useEffect(() => {
@@ -105,7 +109,6 @@ export default function TemplatesPage() {
       }
     }
     measure();
-    setIsMounted(true);
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
@@ -420,7 +423,7 @@ export default function TemplatesPage() {
                   <Zap className="w-4 h-4 text-cyan-400" /> Check ATS Score
                 </Link>
               </div>
-              <p className="text-[10px] text-slate-600 text-center pb-4">Browser will open print dialog — select "Save as PDF" to download</p>
+              <p className="text-[10px] text-slate-600 text-center pb-4">Browser will open print dialog. Select &quot;Save as PDF&quot; to download.</p>
             </div>
 
             {/* Preview column */}
@@ -469,7 +472,7 @@ export default function TemplatesPage() {
       </main>
 
       {/* Portal: renders as direct body child — display:none overridden by print CSS */}
-      {isMounted && createPortal(
+      {isClient && createPortal(
         <div id="resume-print-root" style={{ display: "none" }}>
           <TemplateComponent data={data} />
         </div>,

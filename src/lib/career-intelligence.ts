@@ -1,4 +1,4 @@
-import type { RoleType, ExperienceLevel, DetectedTech, SkillSuggestion, RoleReadiness, ResumeAddition, CareerIntelligence } from "@/types";
+import type { RoleType, ExperienceLevel, DetectedTech, SkillSuggestion, CareerIntelligence } from "@/types";
 
 // ─── Experience Level Display Maps ───────────────────────────────────────────
 

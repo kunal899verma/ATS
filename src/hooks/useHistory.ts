@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ATSResult } from "@/types";
 
 export interface HistoryEntry {
@@ -18,16 +18,19 @@ const STORAGE_KEY = "ats_history";
 const MAX_ENTRIES = 5;
 
 export function useHistory() {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
 
-  useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setHistory(JSON.parse(raw));
+      return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
     } catch {
       // localStorage unavailable (private browsing etc.)
+      return [];
     }
-  }, []);
+  });
 
   const saveEntry = (entry: Omit<HistoryEntry, "id">) => {
     setHistory((prev) => {

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { Zap, Sparkles, Shield, BarChart2, FileText } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
 
 function LoginInner() {

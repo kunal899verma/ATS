@@ -61,6 +61,7 @@ const ACCEPTED = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
 ];
+const MIN_FILE_SIZE = 1;
 const MAX_FILES = 20;
 
 export default function RecruiterPage() {
@@ -81,6 +82,7 @@ export default function RecruiterPage() {
   const addFiles = useCallback(
     (newFiles: File[]) => {
       const valid = newFiles
+        .filter((f) => f.size >= MIN_FILE_SIZE)
         .filter((f) => ACCEPTED.includes(f.type) || /\.(pdf|docx|txt)$/i.test(f.name))
         .slice(0, MAX_FILES - candidates.length);
       setCandidates((prev) => [

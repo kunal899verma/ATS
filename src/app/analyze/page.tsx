@@ -20,6 +20,7 @@ const ACCEPTED_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
 ];
+const MIN_FILE_SIZE = 1;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export default function AnalyzePage() {
@@ -58,6 +59,7 @@ export default function AnalyzePage() {
       ext.endsWith(".docx") ||
       ext.endsWith(".txt");
     if (!isValidType) return "Please upload a PDF, DOCX, or TXT file.";
+    if (f.size < MIN_FILE_SIZE) return "That file is empty. Please choose a valid resume file.";
     if (f.size > MAX_FILE_SIZE) return "File size must be under 5MB.";
     return null;
   };

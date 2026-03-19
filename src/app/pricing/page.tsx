@@ -28,7 +28,7 @@ const FREE_FEATURES = [
 
 const COMPARISON = [
   { feature: "ATS Score", us: true, jobscan: true, resumeWorded: true },
-  { feature: "Keyword matching", us: true, jobscan: true, resumeWorked: true },
+  { feature: "Keyword matching", us: true, jobscan: true, resumeWorded: true },
   { feature: "Synonym-aware matching", us: true, jobscan: false, resumeWorded: false },
   { feature: "Recruiter readability score", us: true, jobscan: false, resumeWorded: false },
   { feature: "Section-by-section scoring", us: true, jobscan: true, resumeWorded: true },
@@ -37,7 +37,7 @@ const COMPARISON = [
   { feature: "Score history", us: true, jobscan: false, resumeWorded: false },
   { feature: "Share results", us: true, jobscan: false, resumeWorded: false },
   { feature: "Print / export report", us: true, jobscan: false, resumeWorded: true },
-  { feature: "No account required", us: true, jobscan: false, resumeWorked: false },
+  { feature: "No account required", us: true, jobscan: false, resumeWorded: false },
   { feature: "Completely free", us: true, jobscan: false, resumeWorded: false },
 ];
 

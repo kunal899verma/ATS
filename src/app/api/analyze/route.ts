@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MIN_FILE_SIZE = 1;
 const MIN_RESUME_TEXT_LENGTH = 80;
 
 export async function POST(req: NextRequest) {
@@ -25,6 +26,13 @@ export async function POST(req: NextRequest) {
     }
     // Option B: uploaded file
     else if (file) {
+      if (file.size < MIN_FILE_SIZE) {
+        return NextResponse.json(
+          { error: "Uploaded file is empty. Please select a valid PDF, DOCX, or TXT resume file." },
+          { status: 400 }
+        );
+      }
+
       if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
           { error: "File is too large. Maximum size is 5MB." },
