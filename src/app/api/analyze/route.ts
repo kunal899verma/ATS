@@ -10,6 +10,36 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MIN_FILE_SIZE = 1;
 const MIN_RESUME_TEXT_LENGTH = 80;
 
+function hasPdfSignature(buffer: Buffer) {
+  return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+}
+
+function getPdfParseErrorResponse(error: unknown) {
+  const name = error instanceof Error ? error.name : "UnknownError";
+  const message = error instanceof Error ? error.message : String(error);
+
+  console.error("[PDF Parse Error]", { name, message });
+
+  if (name === "PasswordException") {
+    return NextResponse.json(
+      { error: "This PDF is password-protected. Please unlock it and upload it again, or paste the resume text directly." },
+      { status: 422 }
+    );
+  }
+
+  if (name === "InvalidPDFException" || name === "FormatError") {
+    return NextResponse.json(
+      { error: "This file does not appear to be a valid text-based PDF. Please export it again as a standard PDF, or paste the resume text directly." },
+      { status: 422 }
+    );
+  }
+
+  return NextResponse.json(
+    { error: "Failed to parse PDF. The file may be image-based or corrupted. Try copy-pasting your resume text instead." },
+    { status: 422 }
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -47,17 +77,21 @@ export async function POST(req: NextRequest) {
 
       if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
         let parser;
+        if (!hasPdfSignature(buffer)) {
+          return NextResponse.json(
+            { error: "The uploaded file is not a valid PDF. Please choose an actual PDF file or export your resume again." },
+            { status: 422 }
+          );
+        }
+
         try {
           // pdf-parse v2 API: new PDFParse({ data: buffer }) + parser.getText()
           const { PDFParse } = await import("pdf-parse") as { PDFParse: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }>; destroy(): Promise<void> } };
           parser = new PDFParse({ data: buffer });
           const data = await parser.getText();
           resumeText = data.text;
-        } catch {
-          return NextResponse.json(
-            { error: "Failed to parse PDF. The file may be image-based or corrupted. Try copy-pasting your resume text instead." },
-            { status: 422 }
-          );
+        } catch (error) {
+          return getPdfParseErrorResponse(error);
         } finally {
           try { await parser?.destroy(); } catch { /* ignore */ }
         }
