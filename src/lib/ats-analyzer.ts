@@ -201,7 +201,7 @@ export function analyzeResume(resumeText: string, jobDescription: string): ATSRe
   const keywordAnalysis = buildKeywordAnalysis(jdKeywords, detectedRole, resumeText, resumeLower, wordCount);
 
   // 3. Format analysis
-  const formatAnalysis = analyzeFormat(resumeText, resumeLower);
+  const formatAnalysis = analyzeFormat(resumeText);
 
   // 4. Section scores
   const sections = buildSectionAnalysis(resumeText, resumeLower, formatAnalysis, keywordAnalysis);
