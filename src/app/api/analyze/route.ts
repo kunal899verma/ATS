@@ -6,9 +6,20 @@ import { trackAnalysis } from "@/lib/user-store";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
+const ANALYSIS_VERSION = "2.1";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MIN_FILE_SIZE = 1;
 const MIN_RESUME_TEXT_LENGTH = 80;
+
+function json(status: number, body: unknown) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "no-store",
+      "X-Analysis-Version": ANALYSIS_VERSION,
+    },
+  });
+}
 
 function hasPdfSignature(buffer: Buffer) {
   return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
@@ -21,23 +32,23 @@ function getPdfParseErrorResponse(error: unknown) {
   console.error("[PDF Parse Error]", { name, message });
 
   if (name === "PasswordException") {
-    return NextResponse.json(
-      { error: "This PDF is password-protected. Please unlock it and upload it again, or paste the resume text directly." },
-      { status: 422 }
-    );
+    return json(422, {
+      error:
+        "This PDF is password-protected. Please unlock it and upload it again, or paste the resume text directly.",
+    });
   }
 
   if (name === "InvalidPDFException" || name === "FormatError") {
-    return NextResponse.json(
-      { error: "This file does not appear to be a valid text-based PDF. Please export it again as a standard PDF, or paste the resume text directly." },
-      { status: 422 }
-    );
+    return json(422, {
+      error:
+        "This file does not appear to be a valid text-based PDF. Please export it again as a standard PDF, or paste the resume text directly.",
+    });
   }
 
-  return NextResponse.json(
-    { error: "Failed to parse PDF. The file may be image-based or corrupted. Try copy-pasting your resume text instead." },
-    { status: 422 }
-  );
+  return json(422, {
+    error:
+      "Failed to parse PDF. The file may be image-based or corrupted. Try copy-pasting your resume text instead.",
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -57,17 +68,14 @@ export async function POST(req: NextRequest) {
     // Option B: uploaded file
     else if (file) {
       if (file.size < MIN_FILE_SIZE) {
-        return NextResponse.json(
-          { error: "Uploaded file is empty. Please select a valid PDF, DOCX, or TXT resume file." },
-          { status: 400 }
-        );
+        return json(400, {
+          error:
+            "Uploaded file is empty. Please select a valid PDF, DOCX, or TXT resume file.",
+        });
       }
 
       if (file.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: "File is too large. Maximum size is 5MB." },
-          { status: 413 }
-        );
+        return json(413, { error: "File is too large. Maximum size is 5MB." });
       }
 
       const fileName = file.name.toLowerCase();
@@ -78,10 +86,10 @@ export async function POST(req: NextRequest) {
       if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
         let parser;
         if (!hasPdfSignature(buffer)) {
-          return NextResponse.json(
-            { error: "The uploaded file is not a valid PDF. Please choose an actual PDF file or export your resume again." },
-            { status: 422 }
-          );
+          return json(422, {
+            error:
+              "The uploaded file is not a valid PDF (missing %PDF- header). Please choose an actual PDF file or export your resume again.",
+          });
         }
 
         try {
@@ -104,35 +112,29 @@ export async function POST(req: NextRequest) {
           const result = await mammoth.extractRawText({ buffer });
           resumeText = result.value;
         } catch {
-          return NextResponse.json(
-            { error: "Failed to parse DOCX. Please try copy-pasting your resume text instead." },
-            { status: 422 }
-          );
+          return json(422, {
+            error:
+              "Failed to parse DOCX. Please try copy-pasting your resume text instead.",
+          });
         }
       } else if (fileType === "text/plain" || fileName.endsWith(".txt")) {
         resumeText = buffer.toString("utf-8");
       } else {
-        return NextResponse.json(
-          { error: "Unsupported file format. Please upload PDF, DOCX, or TXT — or paste your resume text directly." },
-          { status: 415 }
-        );
+        return json(415, {
+          error:
+            "Unsupported file format. Please upload PDF, DOCX, or TXT — or paste your resume text directly.",
+        });
       }
     } else {
-      return NextResponse.json(
-        { error: "Please upload a resume file or paste your resume text." },
-        { status: 400 }
-      );
+      return json(400, { error: "Please upload a resume file or paste your resume text." });
     }
 
     // Validate extracted text
     if (!resumeText || resumeText.trim().length < MIN_RESUME_TEXT_LENGTH) {
-      return NextResponse.json(
-        {
-          error:
-            "Could not extract enough text from the file. If your resume is a scanned image, please copy-paste the text content directly.",
-        },
-        { status: 422 }
-      );
+      return json(422, {
+        error:
+          "Could not extract enough text from the file. If your resume is a scanned image, please copy-paste the text content directly.",
+      });
     }
 
     // Sanitize: remove null bytes and excessive whitespace
@@ -167,7 +169,7 @@ export async function POST(req: NextRequest) {
       {
         headers: {
           "Cache-Control": "no-store",
-          "X-Analysis-Version": "2.0",
+          "X-Analysis-Version": ANALYSIS_VERSION,
         },
       }
     );
@@ -182,9 +184,8 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("[ATS Analysis Error]", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred during analysis. Please try again." },
-      { status: 500 }
-    );
+    return json(500, {
+      error: "An unexpected error occurred during analysis. Please try again.",
+    });
   }
 }
