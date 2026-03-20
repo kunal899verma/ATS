@@ -108,7 +108,6 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(arrayBuffer);
 
       if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
-        let parser;
         if (!hasPdfSignature(buffer)) {
           return json(422, {
             error:
@@ -117,25 +116,28 @@ export async function POST(req: NextRequest) {
         }
 
         try {
-          // pdf-parse v2 API: new PDFParse({ data: buffer }) + parser.getText()
-          let PDFParseClass: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }>; destroy(): Promise<void> };
-          try {
-            const mod = await import("pdf-parse");
-            PDFParseClass = (mod as unknown as { PDFParse: typeof PDFParseClass }).PDFParse;
-            if (typeof PDFParseClass !== "function") throw new TypeError("PDFParse is not a constructor");
-          } catch (importErr) {
-            console.error("[pdf-parse import failed]", importErr);
-            return json(503, {
-              error: "PDF parsing is temporarily unavailable on this server. Please paste your resume text directly using the 'Paste Text' option.",
-            });
+          const { createRequire } = await import("module");
+          const { pathToFileURL } = await import("url");
+          const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+          const req = createRequire(import.meta.url);
+          const workerPath = req.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+          pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+
+          const task = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer), useSystemFonts: true });
+          const doc = await task.promise;
+          const textPages: string[] = [];
+          for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+            const page = await doc.getPage(pageNum);
+            const content = await page.getTextContent();
+            const pageText = content.items
+              .filter((item: unknown) => typeof (item as { str?: string }).str === "string")
+              .map((item: unknown) => (item as { str: string }).str)
+              .join(" ");
+            textPages.push(pageText);
           }
-          parser = new PDFParseClass({ data: buffer });
-          const data = await parser.getText();
-          resumeText = data.text ?? "";
+          resumeText = textPages.join("\n");
         } catch (error) {
           return getPdfParseErrorResponse(error);
-        } finally {
-          try { await parser?.destroy(); } catch { /* ignore */ }
         }
       } else if (
         fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
