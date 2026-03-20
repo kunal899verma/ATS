@@ -30,7 +30,7 @@ function getPdfParseErrorResponse(error: unknown) {
   const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
   const stack = error instanceof Error ? (error.stack ?? "") : "";
 
-  console.error("[PDF Parse Error]", { name, message: message.slice(0, 300), stack: stack.slice(0, 500) });
+  console.error("[PDF Parse Error]", { name, message: message.slice(0, 500), stack: stack.slice(0, 800) });
 
   // Password-protected
   if (name === "PasswordException" || message.includes("password") || message.includes("encrypted")) {
@@ -54,15 +54,17 @@ function getPdfParseErrorResponse(error: unknown) {
     });
   }
 
-  // Module/import-level failure (canvas, worker, etc.) on serverless
+  // Module/import-level failure (canvas, worker, missing module, etc.) on serverless
   if (
     name === "TypeError" ||
     name === "ReferenceError" ||
     message.includes("cannot read") ||
     message.includes("is not a function") ||
     message.includes("is not a constructor") ||
+    message.includes("cannot find") ||
     message.includes("worker") ||
-    message.includes("canvas")
+    message.includes("canvas") ||
+    message.includes("module")
   ) {
     return json(422, {
       error: "PDF parsing is temporarily unavailable. Please paste your resume text directly using the 'Paste Text' option.",
@@ -116,12 +118,10 @@ export async function POST(req: NextRequest) {
         }
 
         try {
-          const { createRequire } = await import("module");
-          const { pathToFileURL } = await import("url");
           const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-          const req = createRequire(import.meta.url);
-          const workerPath = req.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-          pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+          // Do NOT set workerSrc — pdfjs resolves its own worker in Node.js.
+          // Setting a manual path breaks on Vercel because the worker file
+          // is not statically traced into the Lambda bundle.
 
           const task = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer), useSystemFonts: true });
           const doc = await task.promise;
