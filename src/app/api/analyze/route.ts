@@ -118,24 +118,12 @@ export async function POST(req: NextRequest) {
         }
 
         try {
-          const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-          // Do NOT set workerSrc — pdfjs resolves its own worker in Node.js.
-          // Setting a manual path breaks on Vercel because the worker file
-          // is not statically traced into the Lambda bundle.
-
-          const task = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer), useSystemFonts: true });
-          const doc = await task.promise;
-          const textPages: string[] = [];
-          for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
-            const page = await doc.getPage(pageNum);
-            const content = await page.getTextContent();
-            const pageText = content.items
-              .filter((item: unknown) => typeof (item as { str?: string }).str === "string")
-              .map((item: unknown) => (item as { str: string }).str)
-              .join(" ");
-            textPages.push(pageText);
-          }
-          resumeText = textPages.join("\n");
+          // Import from lib directly to avoid index.js running its debug test code
+          // when module.parent is null in ESM/serverless context.
+          // @ts-expect-error — no types for internal subpath, safe to ignore
+          const pdfParse = ((await import("pdf-parse/lib/pdf-parse.js"))).default as (buf: Buffer) => Promise<{ text: string }>;
+          const data = await pdfParse(buffer);
+          resumeText = data.text ?? "";
         } catch (error) {
           return getPdfParseErrorResponse(error);
         }
