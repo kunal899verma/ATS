@@ -2,8 +2,14 @@ import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["pdf-parse", "mammoth"],
+  serverExternalPackages: ["pdf-parse", "mammoth", "canvas"],
   turbopack: {},
+  webpack: (config: { externals?: unknown[] }) => {
+    // pdf.js (used by pdf-parse) may try to import canvas for rendering.
+    // Mark it as an external so the bundle doesn't break when canvas is absent.
+    config.externals = [...(config.externals ?? []), { canvas: "canvas" }];
+    return config;
+  },
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   images: {
     remotePatterns: [

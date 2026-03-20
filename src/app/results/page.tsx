@@ -339,7 +339,7 @@ export default function ResultsPage() {
           <div className="flex flex-col lg:flex-row items-center gap-8">
             {/* Score ring */}
             <div className="flex-shrink-0">
-              <div className="relative">
+              <div className="relative overflow-visible">
                 <ScoreConfetti trigger={scoreRevealed} />
                 <motion.div
                   initial={{ scale: 0.5, opacity: 0 }}
@@ -475,27 +475,34 @@ export default function ResultsPage() {
         {activeTab === "overview" && (
           <div className="space-y-5 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sections.map((section) => {
+              {sections.map((section, i) => {
                 const cfg = STATUS_CONFIG[section.status];
                 const StatusIcon = cfg.icon;
                 return (
-                  <div key={section.name} className="glass rounded-2xl p-5 border border-white/7 hover:border-white/12 transition-colors">
+                  <motion.div
+                    key={section.name}
+                    className="glass rounded-2xl p-5 border border-white/7 hover:border-white/12 transition-colors"
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: i * 0.07, ease: [0.25, 0.1, 0.25, 1] }}
+                    whileHover={{ y: -3, boxShadow: "0 12px 32px rgba(6,182,212,0.12)" }}
+                  >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-white font-semibold text-[14px]">{section.name}</h3>
                       <span className={`flex items-center gap-1 text-[11px] font-medium ${cfg.color}`}>
                         <StatusIcon className="w-3 h-3" /> {cfg.label}
                       </span>
                     </div>
-                    <ProgressBar value={section.score} delay={150} />
+                    <ProgressBar value={section.score} delay={200 + i * 80} />
                     <ul className="mt-3 space-y-1.5">
-                      {section.feedback.slice(0, 3).map((fb, i) => (
-                        <li key={i} className={`flex items-start gap-1.5 text-[12px] ${fb.includes("✓") ? "text-slate-400" : "text-slate-500"}`}>
+                      {section.feedback.slice(0, 3).map((fb, j) => (
+                        <li key={j} className={`flex items-start gap-1.5 text-[12px] ${fb.includes("✓") ? "text-slate-400" : "text-slate-500"}`}>
                           <div className="w-1 h-1 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
                           {fb}
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>

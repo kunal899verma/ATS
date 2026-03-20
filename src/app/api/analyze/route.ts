@@ -27,27 +27,51 @@ function hasPdfSignature(buffer: Buffer) {
 
 function getPdfParseErrorResponse(error: unknown) {
   const name = error instanceof Error ? error.name : "UnknownError";
-  const message = error instanceof Error ? error.message : String(error);
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  const stack = error instanceof Error ? (error.stack ?? "") : "";
 
-  console.error("[PDF Parse Error]", { name, message });
+  console.error("[PDF Parse Error]", { name, message: message.slice(0, 300), stack: stack.slice(0, 500) });
 
-  if (name === "PasswordException") {
+  // Password-protected
+  if (name === "PasswordException" || message.includes("password") || message.includes("encrypted")) {
     return json(422, {
-      error:
-        "This PDF is password-protected. Please unlock it and upload it again, or paste the resume text directly.",
+      error: "This PDF is password-protected. Please unlock it and upload it again, or paste the resume text directly.",
     });
   }
 
-  if (name === "InvalidPDFException" || name === "FormatError") {
+  // Invalid / corrupt PDF structure
+  if (
+    name === "InvalidPDFException" ||
+    name === "FormatError" ||
+    message.includes("invalid pdf") ||
+    message.includes("not a pdf") ||
+    message.includes("missing pdf") ||
+    message.includes("unexpected end") ||
+    message.includes("bad xref")
+  ) {
     return json(422, {
-      error:
-        "This file does not appear to be a valid text-based PDF. Please export it again as a standard PDF, or paste the resume text directly.",
+      error: "This file does not appear to be a valid text-based PDF. Please export it again as a standard PDF, or paste the resume text directly.",
     });
   }
 
+  // Module/import-level failure (canvas, worker, etc.) on serverless
+  if (
+    name === "TypeError" ||
+    name === "ReferenceError" ||
+    message.includes("cannot read") ||
+    message.includes("is not a function") ||
+    message.includes("is not a constructor") ||
+    message.includes("worker") ||
+    message.includes("canvas")
+  ) {
+    return json(422, {
+      error: "PDF parsing is temporarily unavailable. Please paste your resume text directly using the 'Paste Text' option.",
+    });
+  }
+
+  // Image-based or unreadable PDF
   return json(422, {
-    error:
-      "Failed to parse PDF. The file may be image-based or corrupted. Try copy-pasting your resume text instead.",
+    error: "Failed to parse PDF. The file may be image-based or corrupted. Try copy-pasting your resume text instead.",
   });
 }
 
@@ -94,10 +118,20 @@ export async function POST(req: NextRequest) {
 
         try {
           // pdf-parse v2 API: new PDFParse({ data: buffer }) + parser.getText()
-          const { PDFParse } = await import("pdf-parse") as { PDFParse: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }>; destroy(): Promise<void> } };
-          parser = new PDFParse({ data: buffer });
+          let PDFParseClass: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }>; destroy(): Promise<void> };
+          try {
+            const mod = await import("pdf-parse");
+            PDFParseClass = (mod as unknown as { PDFParse: typeof PDFParseClass }).PDFParse;
+            if (typeof PDFParseClass !== "function") throw new TypeError("PDFParse is not a constructor");
+          } catch (importErr) {
+            console.error("[pdf-parse import failed]", importErr);
+            return json(503, {
+              error: "PDF parsing is temporarily unavailable on this server. Please paste your resume text directly using the 'Paste Text' option.",
+            });
+          }
+          parser = new PDFParseClass({ data: buffer });
           const data = await parser.getText();
-          resumeText = data.text;
+          resumeText = data.text ?? "";
         } catch (error) {
           return getPdfParseErrorResponse(error);
         } finally {

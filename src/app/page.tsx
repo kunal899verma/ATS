@@ -199,7 +199,7 @@ export default function HomePage() {
               const Icon = p.icon;
               return (
                 <StaggerItem key={p.title}>
-                  <GlowCard glow="cyan" className={`glass rounded-2xl p-6 border ${p.border} ${p.bg}`}>
+                  <GlowCard glow="cyan" tilt className={`glass rounded-2xl p-6 border ${p.border} ${p.bg}`}>
                     <div className={`text-4xl font-black ${p.color} mb-3 font-mono`}>{p.stat}</div>
                     <h3 className="text-white font-semibold mb-2 leading-snug">{p.title}</h3>
                     <p className="text-slate-400 text-sm leading-relaxed">{p.desc}</p>
@@ -280,7 +280,7 @@ export default function HomePage() {
               const Icon = feat.icon;
               return (
                 <StaggerItem key={feat.title}>
-                  <GlowCard glow={feat.glow} className={`glass rounded-2xl p-6 border ${feat.border} hover:scale-[1.02] transition-all duration-300 group cursor-default h-full`}>
+                  <GlowCard glow={feat.glow} tilt className={`glass rounded-2xl p-6 border ${feat.border} group cursor-default h-full`}>
                     <div className={`w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center mb-4 ${feat.color} group-hover:scale-110 transition-transform`}>
                       <Icon className="w-[18px] h-[18px]" />
                     </div>

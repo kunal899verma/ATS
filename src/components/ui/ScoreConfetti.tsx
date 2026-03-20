@@ -20,18 +20,17 @@ export default function ScoreConfetti({ trigger }: { trigger: boolean }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const parent = canvas.parentElement;
-    canvas.width = parent?.offsetWidth ?? window.innerWidth;
-    canvas.height = parent?.offsetHeight ?? 400;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     const COLORS = ["#00D9FF", "#6366F1", "#0FFF50", "#FFB300", "#8B5CF6", "#EC4899", "#06B6D4", "#A855F7"];
     const particles: ConfettiParticle[] = [];
     const cx = canvas.width / 2;
-    const cy = canvas.height * 0.4;
+    const cy = canvas.height * 0.35;
 
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 180; i++) {
       const angle = (Math.random() * Math.PI * 2);
-      const speed = Math.random() * 10 + 4;
+      const speed = Math.random() * 14 + 5;
       const maxLife = 90 + Math.random() * 50;
       particles.push({
         x: cx + (Math.random() - 0.5) * 80,
@@ -84,7 +83,8 @@ export default function ScoreConfetti({ trigger }: { trigger: boolean }) {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none w-full h-full z-50"
+      style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 9999 }}
+      className="pointer-events-none"
     />
   );
 }

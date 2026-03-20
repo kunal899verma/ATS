@@ -556,7 +556,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
           <button
             onClick={handleAnalyze}
             disabled={!hasResume || isAnalyzing}
-            className="w-full btn-primary flex items-center justify-center gap-3 py-4 rounded-xl font-semibold text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+            className={`w-full btn-primary flex items-center justify-center gap-3 py-4 rounded-xl font-semibold text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none ${hasResume && !isAnalyzing ? "animate-glow-breathe" : ""}`}
           >
             {isAnalyzing ? (
               <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing...</>
