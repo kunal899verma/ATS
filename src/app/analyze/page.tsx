@@ -254,7 +254,7 @@ export default function AnalyzePage() {
               <div className="space-y-4">
                 {/* Drop zone */}
                 <motion.div
-                  className={`relative upload-zone rounded-xl p-10 text-center transition-all ${isDragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
+                  className={`relative upload-zone rounded-xl p-6 sm:p-10 text-center transition-all ${isDragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={() => setIsDragging(false)}
@@ -350,7 +350,7 @@ john@email.com | LinkedIn: linkedin.com/in/johndoe
 EXPERIENCE
 Senior Software Engineer at Acme Corp (2021–Present)
 • Led development of..."
-                    className="w-full h-72 bg-white/3 border border-white/8 rounded-xl p-4 text-slate-300 text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-cyan-500/40 focus:bg-cyan-500/3 transition-all leading-relaxed font-mono"
+                    className="w-full h-48 sm:h-72 bg-white/3 border border-white/8 rounded-xl p-4 text-slate-300 text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-cyan-500/40 focus:bg-cyan-500/3 transition-all leading-relaxed font-mono"
                   />
                   <div className="absolute bottom-3 right-3 text-slate-600 text-[11px]">
                     {pastedResume.length} chars {pastedResume.length >= 80
@@ -501,7 +501,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
           {isAnalyzing && (
             <div className="w-full animate-fade-in flex flex-col items-center">
               {/* Morphing spinner rings */}
-              <div className="relative w-20 h-20 mb-6">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-6">
                 <motion.div
                   className="absolute inset-0 rounded-full border-2 border-cyan-500/20"
                   animate={{ rotate: 360 }}
@@ -530,7 +530,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
               <AnimatePresence mode="wait">
                 <motion.p
                   key={progressLabel}
-                  className="text-white font-medium text-base mb-2"
+                  className="text-white font-medium text-sm sm:text-base mb-2 text-center px-4"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
@@ -541,7 +541,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
               </AnimatePresence>
 
               {/* Progress bar */}
-              <div className="w-56 h-1.5 bg-white/5 rounded-full overflow-hidden mb-4">
+              <div className="w-full max-w-[14rem] h-1.5 bg-white/5 rounded-full overflow-hidden mb-4">
                 <motion.div
                   className="h-full bg-gradient-to-r from-cyan-400 to-violet-500 rounded-full"
                   animate={{ width: `${progress}%` }}
@@ -584,7 +584,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
       {/* Auth gate modal */}
       {showAuthGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm glass rounded-2xl border border-white/8 p-8 text-center shadow-2xl">
+          <div className="w-full max-w-sm glass rounded-2xl border border-white/8 p-6 sm:p-8 text-center shadow-2xl">
             <div className="w-14 h-14 rounded-2xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center mx-auto mb-5">
               <Lock className="w-6 h-6 text-violet-400" />
             </div>

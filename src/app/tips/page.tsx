@@ -245,13 +245,13 @@ export default function TipsPage() {
                           <p className="text-slate-400 text-sm leading-relaxed mb-4">{tip.desc}</p>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="rounded-xl bg-emerald-500/6 border border-emerald-500/15 p-3.5">
+                            <div className="rounded-xl bg-emerald-500/6 border border-emerald-500/15 p-3 sm:p-3.5">
                               <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider mb-2">✓ Do this</p>
-                              <p className="text-slate-300 text-xs leading-relaxed font-mono">{tip.good}</p>
+                              <p className="text-slate-300 text-[11px] sm:text-xs leading-relaxed font-mono break-words">{tip.good}</p>
                             </div>
-                            <div className="rounded-xl bg-red-500/5 border border-red-500/15 p-3.5">
+                            <div className="rounded-xl bg-red-500/5 border border-red-500/15 p-3 sm:p-3.5">
                               <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider mb-2">✗ Not this</p>
-                              <p className="text-slate-400 text-xs leading-relaxed font-mono">{tip.bad}</p>
+                              <p className="text-slate-400 text-[11px] sm:text-xs leading-relaxed font-mono break-words">{tip.bad}</p>
                             </div>
                           </div>
                         </div>

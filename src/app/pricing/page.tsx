@@ -84,10 +84,10 @@ export default function PricingPage() {
         </FadeIn>
 
         {/* Pricing cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-16">
 
           {/* ResumeATS */}
-          <div className="md:col-span-1 relative">
+          <div className="sm:col-span-2 md:col-span-1 relative">
             {/* "Best Value" badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 text-white text-[11px] font-bold shadow-lg shadow-cyan-500/30">
@@ -138,7 +138,7 @@ export default function PricingPage() {
           </div>
 
           {/* Competitors column */}
-          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
 
             {/* Jobscan */}
             <div className="glass rounded-2xl border border-white/6 p-6 opacity-60">
@@ -206,34 +206,36 @@ export default function PricingPage() {
         <FadeIn delay={0.1}>
           <div className="mb-16">
             <h2 className="text-2xl font-bold text-white mb-6 text-center">Full Feature Comparison</h2>
-            <div className="glass rounded-2xl border border-white/8 overflow-hidden">
-              <div className="grid grid-cols-4 border-b border-white/5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <div className="p-4 col-span-2">Feature</div>
-                <div className="p-4 text-center text-cyan-400">ResumeATS</div>
-                <div className="p-4 text-center">Competitors</div>
-              </div>
-              {COMPARISON.map((row, i) => (
-                <div
-                  key={row.feature}
-                  className={`grid grid-cols-4 text-sm ${i < COMPARISON.length - 1 ? "border-b border-white/4" : ""} hover:bg-white/2 transition-colors`}
-                >
-                  <div className="p-4 col-span-2 text-slate-300">{row.feature}</div>
-                  <div className="p-4 flex justify-center">
-                    {row.us ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <XCircle className="w-4 h-4 text-red-400/50" />
-                    )}
-                  </div>
-                  <div className="p-4 flex justify-center">
-                    {(row.jobscan || row.resumeWorded) ? (
-                      <CheckCircle2 className="w-4 h-4 text-slate-500" />
-                    ) : (
-                      <XCircle className="w-4 h-4 text-red-400/50" />
-                    )}
-                  </div>
+            <div className="glass rounded-2xl border border-white/8 overflow-x-auto">
+              <div className="min-w-[300px]">
+                <div className="grid grid-cols-4 border-b border-white/5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <div className="p-3 sm:p-4 col-span-2">Feature</div>
+                  <div className="p-3 sm:p-4 text-center text-cyan-400">ResumeATS</div>
+                  <div className="p-3 sm:p-4 text-center">Competitors</div>
                 </div>
-              ))}
+                {COMPARISON.map((row, i) => (
+                  <div
+                    key={row.feature}
+                    className={`grid grid-cols-4 text-xs sm:text-sm ${i < COMPARISON.length - 1 ? "border-b border-white/4" : ""} hover:bg-white/2 transition-colors`}
+                  >
+                    <div className="p-3 sm:p-4 col-span-2 text-slate-300">{row.feature}</div>
+                    <div className="p-3 sm:p-4 flex justify-center">
+                      {row.us ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-400/50" />
+                      )}
+                    </div>
+                    <div className="p-3 sm:p-4 flex justify-center">
+                      {(row.jobscan || row.resumeWorded) ? (
+                        <CheckCircle2 className="w-4 h-4 text-slate-500" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-400/50" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </FadeIn>

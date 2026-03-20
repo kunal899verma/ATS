@@ -298,8 +298,8 @@ export default function HomePage() {
       <section className="relative py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn direction="up" delay={0.1}>
-            <div className="glass rounded-2xl border border-amber-500/20 bg-amber-500/3 p-8 sm:p-10">
-              <div className="flex flex-col sm:flex-row gap-6 items-start">
+            <div className="glass rounded-2xl border border-amber-500/20 bg-amber-500/3 p-5 sm:p-8 lg:p-10">
+              <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-start">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
                   <AlertTriangle className="w-5 h-5 text-amber-400" />
                 </div>
@@ -343,46 +343,46 @@ export default function HomePage() {
           </FadeIn>
 
           <FadeIn delay={0.2}>
-            <div className="glass rounded-2xl border border-white/8 overflow-hidden overflow-x-auto">
-              <table className="w-full min-w-[560px]">
+            <div className="glass rounded-2xl border border-white/8 overflow-x-auto">
+              <table className="w-full min-w-[480px]">
                 <thead>
                   <tr className="border-b border-white/5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    <th className="p-4 text-left w-[40%]">Feature</th>
-                    <th className="p-4 text-center text-cyan-400">ResumeATS</th>
-                    <th className="p-4 text-center">Jobscan</th>
-                    <th className="p-4 text-center">ResumeStats</th>
-                    <th className="p-4 text-center">Enhancv</th>
+                    <th className="p-3 sm:p-4 text-left w-[42%]">Feature</th>
+                    <th className="p-3 sm:p-4 text-center text-cyan-400">ResumeATS</th>
+                    <th className="p-3 sm:p-4 text-center">Jobscan</th>
+                    <th className="p-3 sm:p-4 text-center">ResumeStats</th>
+                    <th className="p-3 sm:p-4 text-center">Enhancv</th>
                   </tr>
                 </thead>
                 <tbody>
                   {VS_COMPARISON.map((row, i) => (
                     <tr
                       key={row.feature}
-                      className={`text-sm ${i < VS_COMPARISON.length - 1 ? "border-b border-white/4" : ""} hover:bg-white/2 transition-colors`}
+                      className={`text-xs sm:text-sm ${i < VS_COMPARISON.length - 1 ? "border-b border-white/4" : ""} hover:bg-white/2 transition-colors`}
                     >
-                      <td className="p-4 text-slate-300">{row.feature}</td>
-                      <td className="p-4 text-center">
-                        {row.us ? <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-slate-600 text-lg">—</span>}
+                      <td className="p-3 sm:p-4 text-slate-300">{row.feature}</td>
+                      <td className="p-3 sm:p-4 text-center">
+                        {row.us ? <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-slate-600 text-base">—</span>}
                       </td>
-                      <td className="p-4 text-center">
-                        {row.jobscan ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500 text-base">✗</span>}
+                      <td className="p-3 sm:p-4 text-center">
+                        {row.jobscan ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500 text-sm">✗</span>}
                       </td>
-                      <td className="p-4 text-center">
-                        {row.resumestats ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500 text-base">✗</span>}
+                      <td className="p-3 sm:p-4 text-center">
+                        {row.resumestats ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500 text-sm">✗</span>}
                       </td>
-                      <td className="p-4 text-center">
-                        {row.enhancv ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500 text-base">✗</span>}
+                      <td className="p-3 sm:p-4 text-center">
+                        {row.enhancv ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500 text-sm">✗</span>}
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-cyan-500/5 border-t border-cyan-500/15">
-                    <td className="p-4 text-slate-400 text-xs font-semibold">Price</td>
-                    <td className="p-4 text-center text-cyan-400 text-xs font-bold">Free</td>
-                    <td className="p-4 text-center text-slate-500 text-xs">$49.95/mo</td>
-                    <td className="p-4 text-center text-slate-500 text-xs">$12/resume</td>
-                    <td className="p-4 text-center text-slate-500 text-xs">€25/mo</td>
+                    <td className="p-3 sm:p-4 text-slate-400 text-xs font-semibold">Price</td>
+                    <td className="p-3 sm:p-4 text-center text-cyan-400 text-xs font-bold">Free</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$49.95/mo</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$12/resume</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">€25/mo</td>
                   </tr>
                 </tfoot>
               </table>
@@ -471,7 +471,7 @@ export default function HomePage() {
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
 
-          <div className="flex items-center justify-center gap-6 mt-6 text-slate-500 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-6 text-slate-500 text-xs">
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> No account</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> No credit card</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Instant results</span>
@@ -493,7 +493,7 @@ export default function HomePage() {
           <p className="text-slate-600 text-xs text-center">
             Built to level the playing field. Your resume data is never stored.
           </p>
-          <div className="flex gap-6 text-slate-600 text-xs">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-slate-600 text-xs">
             <Link href="/analyze" className="hover:text-slate-400 transition-colors">Analyze Resume</Link>
             <Link href="/tips" className="hover:text-slate-400 transition-colors">ATS Tips</Link>
             <Link href="/pricing" className="hover:text-slate-400 transition-colors">Pricing</Link>

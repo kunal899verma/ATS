@@ -61,7 +61,7 @@ function LoginInner() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#020817] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <main className="min-h-screen bg-[#020817] flex flex-col items-center justify-center px-4 py-10 sm:py-4 relative overflow-hidden">
       {/* Background glows */}
       <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/6 rounded-full blur-3xl pointer-events-none" />
@@ -86,7 +86,7 @@ function LoginInner() {
 
       {/* Card */}
       <motion.div
-        className="relative z-10 w-full max-w-md glass rounded-2xl border border-white/8 p-8"
+        className="relative z-10 w-full max-w-md glass rounded-2xl border border-white/8 p-5 sm:p-8"
         initial={{ opacity: 0, y: 32, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}

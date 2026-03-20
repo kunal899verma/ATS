@@ -249,7 +249,7 @@ export default function ResultsPage() {
             <p className="text-slate-500 text-xs mt-0.5 truncate max-w-xs">{fileName}</p>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
             {/* History button */}
             {history.length > 1 && (
               <button
@@ -335,8 +335,8 @@ export default function ResultsPage() {
         </div>
 
         {/* ── Hero Score Card ─────────────────────────────────────────────── */}
-        <div className="glass rounded-2xl border border-white/8 p-6 sm:p-8 mb-5 print:border print:border-gray-200 print:shadow-none">
-          <div className="flex flex-col lg:flex-row items-center gap-8">
+        <div className="glass rounded-2xl border border-white/8 p-4 sm:p-6 lg:p-8 mb-5 print:border print:border-gray-200 print:shadow-none">
+          <div className="flex flex-col lg:flex-row items-center gap-5 sm:gap-8">
             {/* Score ring */}
             <div className="flex-shrink-0">
               <div className="relative overflow-visible">
@@ -365,7 +365,7 @@ export default function ResultsPage() {
                 <p className="text-slate-400 text-[15px] mb-6 leading-relaxed">{ctx.subtext}</p>
               </motion.div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 gap-2">
                 {[
                   { label: "Keywords", value: result.scoreBreakdown.keywords, weight: "35%" },
                   { label: "Skills", value: result.scoreBreakdown.skills, weight: "20%" },
@@ -391,7 +391,7 @@ export default function ResultsPage() {
             </div>
 
             {/* Radar chart */}
-            <div className="flex-shrink-0 w-full lg:w-[280px] print:hidden">
+            <div className="hidden sm:block flex-shrink-0 w-full lg:w-[280px] print:hidden">
               <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wider text-center mb-2">Score Radar</p>
               <ScoreRadarChart breakdown={result.scoreBreakdown} />
             </div>
@@ -421,7 +421,7 @@ export default function ResultsPage() {
         </div>
 
         {/* ── Tabs ────────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 p-1 glass rounded-xl border border-white/5 mb-5 w-fit overflow-x-auto print:hidden">
+        <div className="flex gap-1 p-1 glass rounded-xl border border-white/5 mb-5 w-full sm:w-fit overflow-x-auto print:hidden scrollbar-none">
           {(
             [
               { id: "overview" as const, label: "Section Scores", icon: BarChart3, badge: undefined as number | undefined, badgeColor: undefined as string | undefined },
@@ -437,7 +437,7 @@ export default function ResultsPage() {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? tab.id === "ai"
                       ? "bg-violet-500/15 text-violet-300"

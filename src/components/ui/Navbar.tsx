@@ -84,7 +84,7 @@ export default function Navbar() {
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-52 glass rounded-xl border border-white/8 p-1 shadow-xl shadow-black/40 animate-fade-in">
+                  <div className="absolute right-0 top-full mt-2 w-52 max-w-[calc(100vw-2rem)] glass rounded-xl border border-white/8 p-1 shadow-xl shadow-black/40 animate-fade-in">
                     <div className="px-3 py-2 border-b border-white/5 mb-1">
                       <p className="text-white text-sm font-medium truncate">{session.user.name}</p>
                       <p className="text-slate-500 text-xs truncate">{session.user.email}</p>
