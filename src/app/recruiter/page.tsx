@@ -273,7 +273,7 @@ export default function RecruiterPage() {
               {/* Change 3: Animated upload/drop zone */}
               <motion.div whileHover={{ scale: 1.01 }}>
                 <div
-                  className={`upload-zone rounded-xl p-8 text-center cursor-pointer mb-4 ${isDragging ? "dragging" : ""}`}
+                  className={`upload-zone rounded-xl p-5 sm:p-8 text-center cursor-pointer mb-4 ${isDragging ? "dragging" : ""}`}
                   style={{
                     boxShadow: isDragging
                       ? "0 0 40px rgba(6,182,212,0.3), inset 0 0 40px rgba(6,182,212,0.05)"
@@ -402,7 +402,7 @@ export default function RecruiterPage() {
 
         {/* Empty state */}
         {candidates.length === 0 && (
-          <div className="glass rounded-2xl border border-white/8 p-16 text-center">
+          <div className="glass rounded-2xl border border-white/8 p-8 sm:p-16 text-center">
             <Users className="w-10 h-10 text-slate-600 mx-auto mb-4" />
             <p className="text-slate-400 font-medium mb-1">No resumes uploaded yet</p>
             <p className="text-slate-600 text-sm">
@@ -413,7 +413,7 @@ export default function RecruiterPage() {
 
         {/* Waiting to analyze */}
         {candidates.length > 0 && done.length === 0 && !isAnalyzing && (
-          <div className="glass rounded-2xl border border-cyan-500/15 bg-cyan-500/3 p-10 text-center">
+          <div className="glass rounded-2xl border border-cyan-500/15 bg-cyan-500/3 p-8 sm:p-10 text-center">
             <Zap className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
             <p className="text-white font-semibold mb-1">
               {candidates.length} resume{candidates.length !== 1 ? "s" : ""} ready
@@ -586,90 +586,97 @@ export default function RecruiterPage() {
                         transition={{ duration: 0.3, layout: { duration: 0.2 } }}
                       >
                         <div
-                          className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-5 py-4 hover:bg-white/2 transition-colors ${selectedIds.has(c.id) ? "bg-violet-500/4" : ""}`}
+                          className={`px-4 sm:px-5 py-3 sm:py-4 hover:bg-white/2 transition-colors ${selectedIds.has(c.id) ? "bg-violet-500/4" : ""}`}
                         >
-                          {/* Checkbox */}
-                          <button
-                            onClick={() => toggleSelect(c.id)}
-                            className={`flex-shrink-0 transition-colors ${selectedIds.has(c.id) ? "text-violet-400" : "text-slate-600 hover:text-slate-400"}`}
-                            title={selectedIds.size >= 3 && !selectedIds.has(c.id) ? "Max 3 candidates" : "Select to compare"}
-                          >
-                            {selectedIds.has(c.id)
-                              ? <CheckSquare className="w-4 h-4" />
-                              : <Square className="w-4 h-4" />
-                            }
-                          </button>
+                          {/* Top row: checkbox + rank + name + score + report */}
+                          <div className="flex items-center gap-2 sm:gap-4">
+                            {/* Checkbox */}
+                            <button
+                              onClick={() => toggleSelect(c.id)}
+                              className={`flex-shrink-0 transition-colors ${selectedIds.has(c.id) ? "text-violet-400" : "text-slate-600 hover:text-slate-400"}`}
+                              title={selectedIds.size >= 3 && !selectedIds.has(c.id) ? "Max 3 candidates" : "Select to compare"}
+                            >
+                              {selectedIds.has(c.id)
+                                ? <CheckSquare className="w-4 h-4" />
+                                : <Square className="w-4 h-4" />
+                              }
+                            </button>
 
-                          {/* Rank */}
-                          <div
-                            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border ${
-                              i === 0 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
-                              i === 1 ? "bg-slate-400/15 text-slate-300 border-slate-400/20" :
-                              i === 2 ? "bg-orange-700/15 text-orange-500 border-orange-700/25" :
-                                        "bg-white/5 text-slate-500 border-white/8"
-                            }`}
-                          >
-                            {i + 1}
-                          </div>
+                            {/* Rank */}
+                            <div
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border ${
+                                i === 0 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
+                                i === 1 ? "bg-slate-400/15 text-slate-300 border-slate-400/20" :
+                                i === 2 ? "bg-orange-700/15 text-orange-500 border-orange-700/25" :
+                                          "bg-white/5 text-slate-500 border-white/8"
+                              }`}
+                            >
+                              {i + 1}
+                            </div>
 
-                          {/* Name + role badge */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-medium text-sm truncate">{c.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${rc.bg} ${rc.text} ${rc.border}`}>
-                                {ROLE_LABELS[r.detectedRole]}
+                            {/* Name + role badge */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white font-medium text-sm truncate">{c.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${rc.bg} ${rc.text} ${rc.border}`}>
+                                  {ROLE_LABELS[r.detectedRole]}
+                                </span>
+                                <span className="text-slate-600 text-[11px] truncate hidden sm:inline">{c.file.name}</span>
+                              </div>
+                            </div>
+
+                            {/* Score */}
+                            <div className="flex-shrink-0 text-center">
+                              <div className={`text-xl sm:text-2xl font-bold leading-none ${getScoreColor(r.overallScore)}`}>
+                                {r.overallScore}
+                              </div>
+                              <div className="text-slate-600 text-[10px]">/100</div>
+                            </div>
+
+                            {/* Grade */}
+                            <div className="flex-shrink-0 hidden sm:block">
+                              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getGradeBg(r.grade)}`}>
+                                {r.grade}
                               </span>
-                              <span className="text-slate-600 text-[11px] truncate">{c.file.name}</span>
                             </div>
-                          </div>
 
-                          {/* Score */}
-                          <div className="flex-shrink-0 text-center w-14">
-                            <div className={`text-2xl font-bold leading-none ${getScoreColor(r.overallScore)}`}>
-                              {r.overallScore}
+                            {/* Match % — hidden on smallest screens */}
+                            <div className="flex-shrink-0 text-center hidden xs:block sm:block">
+                              <div className="text-sm font-semibold text-slate-300">
+                                {r.keywordAnalysis.overallMatchRate}%
+                              </div>
+                              <div className="text-slate-600 text-[10px]">match</div>
                             </div>
-                            <div className="text-slate-600 text-[10px]">/100</div>
+
+                            {/* View report */}
+                            <button
+                              onClick={() => handleViewReport(c)}
+                              className="btn-ghost flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs flex-shrink-0"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Report</span>
+                            </button>
                           </div>
 
-                          {/* Grade */}
-                          <div className="flex-shrink-0">
-                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getGradeBg(r.grade)}`}>
-                              {r.grade}
-                            </span>
-                          </div>
-
-                          {/* Match % */}
-                          <div className="flex-shrink-0 text-center w-14">
-                            <div className="text-sm font-semibold text-slate-300">
-                              {r.keywordAnalysis.overallMatchRate}%
+                          {/* Bottom row: gaps (mobile-friendly) */}
+                          {r.keywordAnalysis.topMissingKeywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2 ml-9 sm:ml-14">
+                              {r.keywordAnalysis.topMissingKeywords.slice(0, 3).map((kw) => (
+                                <span
+                                  key={kw}
+                                  className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/8 text-red-400 border border-red-500/15 truncate max-w-[100px]"
+                                >
+                                  {kw}
+                                </span>
+                              ))}
                             </div>
-                            <div className="text-slate-600 text-[10px]">match</div>
-                          </div>
-
-                          {/* Gaps */}
-                          <div className="flex-1 flex flex-wrap gap-1 min-w-0 max-w-[200px]">
-                            {r.keywordAnalysis.topMissingKeywords.slice(0, 3).map((kw) => (
-                              <span
-                                key={kw}
-                                className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/8 text-red-400 border border-red-500/15 truncate max-w-[80px]"
-                              >
-                                {kw}
-                              </span>
-                            ))}
-                            {r.keywordAnalysis.topMissingKeywords.length === 0 && (
+                          )}
+                          {r.keywordAnalysis.topMissingKeywords.length === 0 && (
+                            <div className="flex mt-1.5 ml-9 sm:ml-14">
                               <span className="text-emerald-400 text-[11px] flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" /> No gaps
+                                <CheckCircle2 className="w-3 h-3" /> No keyword gaps
                               </span>
-                            )}
-                          </div>
-
-                          {/* View report */}
-                          <button
-                            onClick={() => handleViewReport(c)}
-                            className="btn-ghost flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs flex-shrink-0"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Report
-                          </button>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     );

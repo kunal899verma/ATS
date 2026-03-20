@@ -61,7 +61,7 @@ export default function AnimatedHeroSection() {
             </motion.div>
 
             {/* Headline */}
-            <motion.h1 variants={item} className="text-5xl sm:text-6xl lg:text-[68px] font-bold text-white leading-[1.1] tracking-tight mb-6">
+            <motion.h1 variants={item} className="text-4xl sm:text-5xl lg:text-[68px] font-bold text-white leading-[1.1] tracking-tight mb-6">
               Your Resume Has{" "}
               <span className="gradient-text">7 Seconds.</span>
               <br />
@@ -75,7 +75,7 @@ export default function AnimatedHeroSection() {
 
             {/* CTAs */}
             <motion.div variants={item} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-12">
-              <Link href="/analyze" className="btn-primary flex items-center gap-2.5 px-8 py-4 rounded-xl text-base group">
+              <Link href="/analyze" className="btn-primary flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl text-base group w-full sm:w-auto">
                 Analyze My Resume Free
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>

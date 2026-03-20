@@ -52,7 +52,7 @@ export default async function BlogIndexPage() {
       {posts[0] && (
         <Link
           href={`/blog/${posts[0].slug}`}
-          className="glass rounded-2xl border border-white/8 p-7 mb-8 block hover:border-white/14 transition-all group"
+          className="glass rounded-2xl border border-white/8 p-5 sm:p-7 mb-8 block hover:border-white/14 transition-all group"
         >
           <div className="flex flex-col sm:flex-row sm:items-start gap-5">
             <div className="flex-1">
@@ -81,7 +81,7 @@ export default async function BlogIndexPage() {
       )}
 
       {/* Post grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {posts.slice(1).map((post) => (
           <Link
             key={post.slug}
