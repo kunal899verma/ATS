@@ -62,6 +62,24 @@ const STATUS_CONFIG = {
 const EFFORT_LABEL = { easy: "Quick fix", medium: "30 min", hard: "1–2 hrs" };
 const EFFORT_COLOR = { easy: "text-emerald-400", medium: "text-amber-400", hard: "text-orange-400" };
 
+type RecommendedAction =
+  | {
+      kind: "action";
+      label: string;
+      description: string;
+      buttonLabel: string;
+      accent: string;
+      onClick: () => void;
+    }
+  | {
+      kind: "link";
+      label: string;
+      description: string;
+      buttonLabel: string;
+      accent: string;
+      href: string;
+    };
+
 function getScoreContext(score: number) {
   if (score >= 85) return { headline: "Top 10% — Outstanding", subtext: "Your resume is highly optimized. Focus on tailoring the summary and you're ready to apply.", color: "text-cyan-400", level: "🏆" };
   if (score >= 72) return { headline: "Top 25% — Strong", subtext: "A few targeted fixes will push you into the top tier. Check the critical suggestions first.", color: "text-emerald-400", level: "🎯" };
@@ -291,9 +309,10 @@ export default function ResultsPage() {
   const keywords = showAllKeywords
     ? result.keywordAnalysis.matches
     : result.keywordAnalysis.matches.slice(0, 20);
-  const recommendedAction =
+  const recommendedAction: RecommendedAction =
     criticalCount > 0
       ? {
+          kind: "action",
           label: "Fix critical issues first",
           description: "Start with the highest-impact resume fixes before generating new application materials.",
           buttonLabel: `Open Fix List (${criticalCount})`,
@@ -302,6 +321,7 @@ export default function ResultsPage() {
         }
       : result.keywordAnalysis.topMissingKeywords.length > 0
         ? {
+            kind: "action",
             label: "Review missing keywords next",
             description: "Your resume is close, but the job-specific language still needs tightening before you apply.",
             buttonLabel: "Open Keywords",
@@ -309,6 +329,7 @@ export default function ResultsPage() {
             onClick: () => handleTabChange("keywords"),
           }
         : {
+            kind: "link",
             label: "You look ready to tailor this application",
             description: "Your next best move is to reuse this resume in the Cover Letter and Interview Prep tools.",
             buttonLabel: "Generate Cover Letter",
@@ -377,7 +398,7 @@ export default function ResultsPage() {
                 <h3 className="mt-3 text-white text-lg font-semibold">{recommendedAction.label}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-slate-400 max-w-2xl">{recommendedAction.description}</p>
               </div>
-              {"href" in recommendedAction ? (
+              {recommendedAction.kind === "link" ? (
                 <Link
                   href={recommendedAction.href}
                   className="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold"
