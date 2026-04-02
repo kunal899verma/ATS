@@ -42,7 +42,7 @@ function extractName(text: string, fileName: string): string {
 }
 
 function getScoreColor(score: number) {
-  if (score >= 85) return "text-cyan-400";
+  if (score >= 85) return "text-indigo-400";
   if (score >= 70) return "text-emerald-400";
   if (score >= 55) return "text-amber-400";
   if (score >= 40) return "text-orange-400";
@@ -50,7 +50,7 @@ function getScoreColor(score: number) {
 }
 
 function getGradeBg(grade: string) {
-  if (grade === "A+" || grade === "A") return "bg-cyan-500/15 text-cyan-400 border-cyan-500/25";
+  if (grade === "A+" || grade === "A") return "bg-indigo-500/15 text-indigo-400 border-indigo-500/25";
   if (grade === "B+" || grade === "B") return "bg-emerald-500/15 text-emerald-400 border-emerald-500/25";
   if (grade === "C+" || grade === "C") return "bg-amber-500/15 text-amber-400 border-amber-500/25";
   return "bg-red-500/15 text-red-400 border-red-500/25";
@@ -230,7 +230,7 @@ export default function RecruiterPage() {
       : null;
 
   return (
-    <main className="min-h-screen bg-[#020817] relative">
+    <main className="min-h-screen bg-[var(--bg-primary)] relative">
       <Navbar />
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
 
@@ -261,7 +261,7 @@ export default function RecruiterPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
 
           {/* Upload zone */}
-          <div className="lg:col-span-2 glass rounded-2xl border border-white/8 overflow-hidden">
+          <div className="lg:col-span-2 glass-card border border-white/[0.06] overflow-hidden">
             <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-white/5">
               <div className="w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-3 h-3 text-violet-400" />
@@ -305,14 +305,14 @@ export default function RecruiterPage() {
                       key={c.id}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs border transition-colors ${
                         c.status === "done"      ? "bg-emerald-500/5 border-emerald-500/15" :
-                        c.status === "analyzing" ? "bg-cyan-500/5 border-cyan-500/15" :
+                        c.status === "analyzing" ? "bg-indigo-500/5 border-indigo-500/15" :
                         c.status === "error"     ? "bg-red-500/5 border-red-500/15" :
                                                    "bg-white/3 border-white/5"
                       }`}
                     >
                       <FileText className={`w-3.5 h-3.5 flex-shrink-0 ${
                         c.status === "done"      ? "text-emerald-400" :
-                        c.status === "analyzing" ? "text-cyan-400" :
+                        c.status === "analyzing" ? "text-indigo-400" :
                         c.status === "error"     ? "text-red-400" : "text-slate-500"
                       }`} />
                       <span className="text-slate-300 truncate flex-1">{c.file.name}</span>
@@ -327,7 +327,7 @@ export default function RecruiterPage() {
                           animate={{ opacity: [0.5, 1, 0.5] }}
                           transition={{ duration: 1.5, repeat: Infinity }}
                         >
-                          <Loader2 className="w-3 h-3 text-cyan-400 animate-spin flex-shrink-0" />
+                          <Loader2 className="w-3 h-3 text-indigo-400 animate-spin flex-shrink-0" />
                         </motion.div>
                       )}
                       {c.status === "error" && (
@@ -350,10 +350,10 @@ export default function RecruiterPage() {
 
           {/* JD + Analyze button */}
           <div className="flex flex-col gap-4">
-            <div className="glass rounded-2xl border border-white/8 overflow-hidden flex-1">
+            <div className="glass-card border border-white/[0.06] overflow-hidden flex-1">
               <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-white/5">
-                <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                  <Target className="w-3 h-3 text-cyan-400" />
+                <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                  <Target className="w-3 h-3 text-indigo-400" />
                 </div>
                 <div>
                   <h2 className="text-white font-semibold text-sm">Job Description</h2>
@@ -365,7 +365,7 @@ export default function RecruiterPage() {
                   value={jd}
                   onChange={(e) => setJD(e.target.value)}
                   placeholder="Paste the job description here for keyword-matched ranking..."
-                  className="w-full h-32 bg-white/3 border border-white/8 rounded-xl p-3 text-slate-300 text-xs placeholder-slate-600 resize-none focus:outline-none focus:border-cyan-500/40 leading-relaxed"
+                  className="w-full h-32 bg-white/3 border border-white/[0.06] rounded-xl p-3 text-slate-300 text-xs placeholder-slate-600 resize-none focus:outline-none focus:border-indigo-500/40 leading-relaxed"
                 />
                 <p className="text-[11px] mt-1.5">
                   {jd.length < 50 ? (
@@ -402,7 +402,7 @@ export default function RecruiterPage() {
 
         {/* Empty state */}
         {candidates.length === 0 && (
-          <div className="glass rounded-2xl border border-white/8 p-8 sm:p-16 text-center">
+          <div className="glass-card border border-white/[0.06] p-8 sm:p-16 text-center">
             <Users className="w-10 h-10 text-slate-600 mx-auto mb-4" />
             <p className="text-slate-400 font-medium mb-1">No resumes uploaded yet</p>
             <p className="text-slate-600 text-sm">
@@ -413,8 +413,8 @@ export default function RecruiterPage() {
 
         {/* Waiting to analyze */}
         {candidates.length > 0 && done.length === 0 && !isAnalyzing && (
-          <div className="glass rounded-2xl border border-cyan-500/15 bg-cyan-500/3 p-8 sm:p-10 text-center">
-            <Zap className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
+          <div className="glass-card border border-indigo-500/15 bg-indigo-500/3 p-8 sm:p-10 text-center">
+            <Zap className="w-8 h-8 text-indigo-400 mx-auto mb-3" />
             <p className="text-white font-semibold mb-1">
               {candidates.length} resume{candidates.length !== 1 ? "s" : ""} ready
             </p>
@@ -440,7 +440,7 @@ export default function RecruiterPage() {
                   icon: BarChart3,
                   color: avgScore >= 70 ? "text-emerald-400" : avgScore >= 50 ? "text-amber-400" : "text-red-400",
                 },
-                { label: "Top Score", value: topCandidate?.result?.overallScore ?? "—", icon: TrendingUp, color: "text-cyan-400" },
+                { label: "Top Score", value: topCandidate?.result?.overallScore ?? "—", icon: TrendingUp, color: "text-indigo-400" },
                 { label: "Top Candidate", value: topCandidate?.name?.split(" ")[0] ?? "—", icon: CheckCircle2, color: "text-emerald-400" },
               ].map((stat) => {
                 const Icon = stat.icon;
@@ -448,7 +448,7 @@ export default function RecruiterPage() {
                   <motion.div
                     key={stat.label}
                     variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                    className="glass rounded-2xl p-4 border border-white/8"
+                    className="glass-card p-4 border border-white/[0.06]"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Icon className={`w-3.5 h-3.5 ${stat.color}`} />
@@ -474,7 +474,7 @@ export default function RecruiterPage() {
             )}
 
             {/* Rankings table */}
-            <div className="glass rounded-2xl border border-white/8 overflow-hidden">
+            <div className="glass-card border border-white/[0.06] overflow-hidden">
               {/* Table controls */}
               <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 border-b border-white/5">
                 <h2 className="text-white font-semibold flex items-center gap-2">
@@ -490,7 +490,7 @@ export default function RecruiterPage() {
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
                       showFilters || filterMinScore > 0 || filterRole !== "all"
                         ? "bg-violet-500/15 border-violet-500/25 text-violet-300"
-                        : "btn-ghost border-white/8"
+                        : "btn-ghost border-white/[0.06]"
                     }`}
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -608,7 +608,7 @@ export default function RecruiterPage() {
                                 i === 0 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
                                 i === 1 ? "bg-slate-400/15 text-slate-300 border-slate-400/20" :
                                 i === 2 ? "bg-orange-700/15 text-orange-500 border-orange-700/25" :
-                                          "bg-white/5 text-slate-500 border-white/8"
+                                          "bg-white/5 text-slate-500 border-white/[0.06]"
                               }`}
                             >
                               {i + 1}
@@ -705,14 +705,14 @@ export default function RecruiterPage() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-5xl glass rounded-2xl border border-white/8 shadow-2xl"
+              className="w-full max-w-5xl glass-card border border-white/[0.06] shadow-2xl"
               initial={{ opacity: 0, scale: 0.93, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-white/8">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
                 <h2 className="text-white font-bold text-lg flex items-center gap-2">
                   <GitCompare className="w-5 h-5 text-violet-400" />
                   Candidate Comparison

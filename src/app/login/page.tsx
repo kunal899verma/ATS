@@ -47,23 +47,23 @@ function LoginInner() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-[#020817] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-cyan-400 rounded-full animate-spin" />
       </div>
     );
   }
 
   const PERKS = [
-    { icon: BarChart2, text: "Unlimited ATS checks" },
-    { icon: FileText, text: "Resume history & tracking" },
+    { icon: BarChart2, text: "Optional sign-in for repeat visits" },
+    { icon: FileText, text: "Keep your profile connected" },
     { icon: Shield, text: "Private & secure — no spam" },
-    { icon: Sparkles, text: "Career Intelligence insights" },
+    { icon: Sparkles, text: "Core tools still work without an account" },
   ];
 
   return (
-    <main className="min-h-screen bg-[#020817] flex flex-col items-center justify-center px-4 py-10 sm:py-4 relative overflow-hidden">
+    <main className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center px-4 py-10 sm:py-4 relative overflow-hidden">
       {/* Background glows */}
-      <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/6 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
       <FloatingOrbs count={4} />
@@ -75,18 +75,18 @@ function LoginInner() {
         transition={{ duration: 0.5 }}
       >
         <Link href="/" className="flex items-center gap-2 mb-10 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-violet-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Zap className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-xl text-white">
-            Resume<span className="text-cyan-400">ATS</span>
+            Resume<span className="text-indigo-400">ATS</span>
           </span>
         </Link>
       </motion.div>
 
       {/* Card */}
       <motion.div
-        className="relative z-10 w-full max-w-md glass rounded-2xl border border-white/8 p-5 sm:p-8"
+        className="relative z-10 w-full max-w-md glass-card border border-white/[0.06] p-5 sm:p-8"
         initial={{ opacity: 0, y: 32, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
@@ -101,7 +101,8 @@ function LoginInner() {
             Continue with your account
           </h1>
           <p className="text-slate-400 text-sm leading-relaxed">
-            Sign in to unlock unlimited ATS checks and track your resume progress over time.
+            Signing in is optional. Use it if you want a connected profile for repeat visits, while the main ATS,
+            cover letter, and interview tools remain available without an account.
           </p>
         </div>
 
@@ -119,8 +120,8 @@ function LoginInner() {
               transition={{ duration: 0.4 }}
               className="flex items-center gap-2.5 p-3 rounded-xl bg-white/3 border border-white/5"
             >
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center flex-shrink-0">
-                <Icon className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                <Icon className="w-3.5 h-3.5 text-indigo-400" />
               </div>
               <span className="text-slate-300 text-xs font-medium leading-tight">{text}</span>
             </motion.div>
@@ -165,20 +166,20 @@ function LoginInner() {
             placeholder="Email"
             value={testEmail}
             onChange={(e) => setTestEmail(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50"
           />
           <input
             type="password"
             placeholder="Password"
             value={testPassword}
             onChange={(e) => setTestPassword(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50"
           />
           {credError && <p className="text-red-400 text-xs">{credError}</p>}
           <motion.button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-cyan-500/15 border border-cyan-500/25 text-cyan-300 hover:bg-cyan-500/20 text-sm font-medium transition-colors disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/25 text-cyan-300 hover:bg-indigo-500/20 text-sm font-medium transition-colors disabled:opacity-50"
             whileTap={{ scale: 0.97 }}
           >
             {loading ? "Signing in…" : "Sign in with test account"}
@@ -193,7 +194,7 @@ function LoginInner() {
 
         <Link
           href="/analyze"
-          className="flex items-center justify-center w-full py-3 rounded-xl border border-white/8 text-slate-400 hover:text-white hover:border-white/16 text-sm transition-colors"
+          className="flex items-center justify-center w-full py-3 rounded-xl border border-white/[0.06] text-slate-400 hover:text-white hover:border-white/16 text-sm transition-colors"
         >
           Use once without signing in
         </Link>
@@ -212,8 +213,8 @@ function LoginInner() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#020817] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-cyan-400 rounded-full animate-spin" />
       </div>
     }>
       <LoginInner />

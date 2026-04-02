@@ -7,15 +7,25 @@ const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   images: {
     remotePatterns: [
-      // Google profile pictures (OAuth sign-in avatars)
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+        ],
+      },
+    ];
   },
 };
 
 const withMDX = createMDX({
-  // Note: remark-gfm omitted — Turbopack requires serialisable options.
-  // GFM tables are handled via custom mdx-components.tsx instead.
   options: {},
 });
 

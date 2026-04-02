@@ -16,7 +16,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="min-h-screen bg-[#020817] flex items-center justify-center px-4">
+    <main className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
 
       <div className="relative z-10 text-center max-w-md">

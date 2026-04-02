@@ -1,8 +1,32 @@
 // ─── Role Detection ───────────────────────────────────────────────────────────
 export type RoleType =
+  // Tech
   | "tech_frontend" | "tech_backend" | "tech_fullstack" | "tech_devops"
-  | "tech_data" | "tech_mobile" | "marketing" | "design" | "sales"
-  | "product" | "general";
+  | "tech_data" | "tech_mobile"
+  // Business
+  | "marketing" | "design" | "sales" | "product"
+  // Healthcare
+  | "healthcare"
+  // Finance & Accounting
+  | "finance"
+  // Legal
+  | "legal"
+  // Education
+  | "education"
+  // Operations & Manufacturing
+  | "operations"
+  // Human Resources
+  | "hr"
+  // Construction & Trades
+  | "trades"
+  // Hospitality & Food Service
+  | "hospitality"
+  // Government & Public Sector
+  | "government"
+  // Creative & Media
+  | "creative_media"
+  // Fallback
+  | "general";
 
 export const ROLE_LABELS: Record<RoleType, string> = {
   tech_frontend:  "Frontend Developer",
@@ -15,6 +39,16 @@ export const ROLE_LABELS: Record<RoleType, string> = {
   design:         "UX / Design",
   sales:          "Sales",
   product:        "Product Manager",
+  healthcare:     "Healthcare",
+  finance:        "Finance / Accounting",
+  legal:          "Legal",
+  education:      "Education",
+  operations:     "Operations / Manufacturing",
+  hr:             "Human Resources",
+  trades:         "Construction / Trades",
+  hospitality:    "Hospitality",
+  government:     "Government / Public Sector",
+  creative_media: "Creative / Media",
   general:        "General",
 };
 
@@ -29,6 +63,16 @@ export const ROLE_COLORS: Record<RoleType, { text: string; bg: string; border: s
   design:         { text: "text-rose-400",    bg: "bg-rose-500/10",    border: "border-rose-500/20" },
   sales:          { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
   product:        { text: "text-teal-400",    bg: "bg-teal-500/10",    border: "border-teal-500/20" },
+  healthcare:     { text: "text-red-400",     bg: "bg-red-500/10",     border: "border-red-500/20" },
+  finance:        { text: "text-green-400",   bg: "bg-green-500/10",   border: "border-green-500/20" },
+  legal:          { text: "text-indigo-400",  bg: "bg-indigo-500/10",  border: "border-indigo-500/20" },
+  education:      { text: "text-yellow-400",  bg: "bg-yellow-500/10",  border: "border-yellow-500/20" },
+  operations:     { text: "text-sky-400",     bg: "bg-sky-500/10",     border: "border-sky-500/20" },
+  hr:             { text: "text-fuchsia-400", bg: "bg-fuchsia-500/10", border: "border-fuchsia-500/20" },
+  trades:         { text: "text-lime-400",    bg: "bg-lime-500/10",    border: "border-lime-500/20" },
+  hospitality:    { text: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/20" },
+  government:     { text: "text-zinc-400",    bg: "bg-zinc-500/10",    border: "border-zinc-500/20" },
+  creative_media: { text: "text-pink-400",    bg: "bg-pink-500/10",    border: "border-pink-500/20" },
   general:        { text: "text-slate-400",   bg: "bg-slate-500/10",   border: "border-slate-500/20" },
 };
 

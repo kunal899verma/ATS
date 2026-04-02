@@ -35,8 +35,8 @@ export default function ScoreRing({ score, size = 180, strokeWidth = 10, grade }
   }, [score]);
 
   const getColor = (s: number) => {
-    if (s >= 80) return "#00d4ff";
-    if (s >= 65) return "#34d399";
+    if (s >= 80) return "#6366f1";
+    if (s >= 65) return "#22c55e";
     if (s >= 50) return "#f59e0b";
     if (s >= 35) return "#f97316";
     return "#ef4444";

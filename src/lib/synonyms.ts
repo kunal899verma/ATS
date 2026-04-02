@@ -129,6 +129,109 @@ export const SYNONYMS: Record<string, string[]> = {
   "a/b testing": ["experimentation", "split testing", "feature flags"],
   "seo": ["search engine optimization", "technical seo"],
   "analytics": ["google analytics", "mixpanel", "amplitude", "tracking"],
+
+  // ─── Healthcare ─────────────────────────────────────────────────────────────
+  "patient care": ["direct patient care", "patient management", "clinical care", "bedside care"],
+  "nursing": ["registered nurse", "rn", "lpn", "licensed practical nurse", "nurse practitioner", "np"],
+  "ehr": ["electronic health records", "emr", "electronic medical records", "epic", "cerner"],
+  "hipaa": ["health insurance portability", "patient privacy", "phi compliance"],
+  "triage": ["patient triage", "clinical assessment", "intake assessment"],
+  "vital signs": ["vitals", "blood pressure", "patient monitoring"],
+  "medication administration": ["med admin", "drug administration", "medication management"],
+  "clinical documentation": ["charting", "clinical charting", "medical documentation"],
+  "cpr": ["basic life support", "bls", "acls", "advanced cardiac life support"],
+  "infection control": ["infection prevention", "sterile technique", "aseptic technique"],
+  "patient education": ["patient teaching", "health education", "discharge instructions"],
+  "wound care": ["wound management", "wound assessment", "dressing changes"],
+  "iv therapy": ["intravenous therapy", "iv insertion", "infusion therapy"],
+  "telemetry": ["cardiac monitoring", "heart monitoring", "ecg", "ekg"],
+
+  // ─── Finance & Accounting ───────────────────────────────────────────────────
+  "accounting": ["accountancy", "financial accounting", "managerial accounting"],
+  "cpa": ["certified public accountant", "chartered accountant", "ca"],
+  "gaap": ["generally accepted accounting principles", "accounting standards", "ifrs"],
+  "financial reporting": ["financial statements", "quarterly reports", "annual reports", "10-k"],
+  "auditing": ["audit", "internal audit", "external audit", "compliance audit"],
+  "tax": ["tax preparation", "tax planning", "tax compliance", "tax filing"],
+  "bookkeeping": ["general ledger", "journal entries", "accounts receivable", "accounts payable"],
+  "reconciliation": ["bank reconciliation", "account reconciliation", "financial reconciliation"],
+  "budgeting": ["budget management", "budget planning", "financial planning", "forecasting"],
+  "payroll": ["payroll processing", "payroll management", "compensation"],
+  "financial analysis": ["financial modeling", "variance analysis", "ratio analysis"],
+  "quickbooks": ["sage", "xero", "freshbooks", "accounting software"],
+  "sap": ["oracle financials", "netsuite", "erp", "enterprise resource planning"],
+  "bloomberg": ["bloomberg terminal", "financial terminal", "reuters"],
+  "risk management": ["risk assessment", "risk mitigation", "credit risk"],
+
+  // ─── Legal ──────────────────────────────────────────────────────────────────
+  "legal research": ["case research", "legal analysis", "statutory research"],
+  "litigation": ["trial", "court proceedings", "dispute resolution", "arbitration"],
+  "contract": ["contract review", "contract drafting", "contract negotiation", "contract management"],
+  "compliance": ["regulatory compliance", "legal compliance", "corporate governance"],
+  "discovery": ["e-discovery", "document review", "legal discovery"],
+  "intellectual property": ["ip", "patent", "trademark", "copyright"],
+  "corporate law": ["business law", "commercial law", "m&a", "mergers and acquisitions"],
+  "westlaw": ["lexisnexis", "legal database", "case law database"],
+  "paralegal": ["legal assistant", "legal secretary", "legal support"],
+  "bar exam": ["bar admission", "bar certified", "licensed attorney"],
+  "due diligence": ["legal due diligence", "dd", "investigation"],
+
+  // ─── Education ──────────────────────────────────────────────────────────────
+  "curriculum": ["curriculum development", "curriculum design", "course design"],
+  "pedagogy": ["teaching methods", "instructional design", "instructional strategies"],
+  "assessment": ["student assessment", "grading", "evaluation", "testing"],
+  "lesson planning": ["lesson plans", "course planning", "instruction planning"],
+  "special education": ["sped", "iep", "individualized education program", "learning disabilities"],
+  "classroom management": ["student behavior", "behavior management", "discipline"],
+  "lms": ["learning management system", "canvas", "blackboard", "moodle", "google classroom"],
+  "differentiated instruction": ["personalized learning", "adaptive learning", "student-centered"],
+  "accreditation": ["school accreditation", "program accreditation", "certification"],
+
+  // ─── Operations & Manufacturing ─────────────────────────────────────────────
+  "lean": ["lean manufacturing", "lean management", "lean six sigma"],
+  "six sigma": ["6 sigma", "dmaic", "process improvement"],
+  "supply chain": ["supply chain management", "scm", "logistics", "procurement"],
+  "inventory": ["inventory management", "inventory control", "warehouse management", "wms"],
+  "quality assurance": ["qa", "quality control", "qc", "iso 9001", "quality management"],
+  "continuous improvement": ["kaizen", "process optimization", "operational excellence"],
+  "erp": ["enterprise resource planning", "sap", "oracle", "microsoft dynamics"],
+  "procurement": ["purchasing", "vendor management", "supplier management", "sourcing"],
+  "kpi": ["key performance indicators", "metrics", "performance metrics"],
+
+  // ─── Human Resources ────────────────────────────────────────────────────────
+  "recruitment": ["recruiting", "talent acquisition", "hiring", "staffing"],
+  "onboarding": ["new hire orientation", "employee orientation", "new employee onboarding"],
+  "performance management": ["performance review", "performance appraisal", "annual review"],
+  "employee relations": ["labor relations", "workplace relations", "er"],
+  "compensation": ["compensation and benefits", "total rewards", "salary administration"],
+  "hris": ["human resource information system", "workday", "bamboohr", "adp", "peoplesoft"],
+  "training": ["learning and development", "l&d", "employee training", "professional development"],
+  "diversity": ["dei", "diversity equity inclusion", "d&i", "equal opportunity"],
+  "organizational development": ["od", "change management", "culture development"],
+
+  // ─── Hospitality ────────────────────────────────────────────────────────────
+  "guest services": ["customer service", "guest relations", "front desk", "concierge"],
+  "food safety": ["servsafe", "haccp", "food handling", "food hygiene"],
+  "pos": ["point of sale", "pos system", "cash register"],
+  "hospitality management": ["hotel management", "restaurant management", "f&b management"],
+  "event planning": ["event management", "event coordination", "banquet management"],
+  "housekeeping": ["room service", "facilities maintenance", "janitorial"],
+
+  // ─── Trades / Construction ──────────────────────────────────────────────────
+  "osha": ["occupational safety", "workplace safety", "safety compliance"],
+  "blueprint": ["blueprints", "schematics", "technical drawings", "cad drawings"],
+  "hvac": ["heating ventilation", "air conditioning", "climate control"],
+  "electrical": ["electrical systems", "wiring", "circuitry", "nec code"],
+  "plumbing": ["pipe fitting", "plumbing systems", "water systems"],
+  "welding": ["mig welding", "tig welding", "arc welding", "fabrication"],
+  "construction management": ["project management", "site management", "general contractor"],
+
+  // ─── Government ─────────────────────────────────────────────────────────────
+  "public policy": ["policy analysis", "policy development", "policy implementation"],
+  "grant writing": ["grant management", "grant administration", "federal grants"],
+  "public administration": ["government administration", "civil service"],
+  "legislative": ["legislation", "regulatory", "congressional", "parliamentary"],
+  "security clearance": ["clearance", "top secret", "secret clearance", "ts/sci"],
 };
 
 /**

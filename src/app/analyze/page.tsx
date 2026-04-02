@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { track } from "@vercel/analytics";
 import Link from "next/link";
 import Navbar from "@/components/ui/Navbar";
@@ -11,6 +10,7 @@ import {
   Sparkles, ClipboardPaste, Info, Lock, Code2, Briefcase, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { clearSavedBrowserData, hasSavedBrowserData, saveAnalysisResult } from "@/lib/storage";
 import type { GitHubAnalysis } from "@/app/api/github/route";
 
 type InputMode = "file" | "paste";
@@ -26,7 +26,6 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export default function AnalyzePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: session } = useSession();
 
   const [inputMode, setInputMode] = useState<InputMode>("file");
   const [file, setFile] = useState<File | null>(null);
@@ -44,12 +43,16 @@ export default function AnalyzePage() {
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
   const [showAuthGate, setShowAuthGate] = useState(false);
+  const [hasBrowserData, setHasBrowserData] = useState(false);
 
-  // Show gate if free check already used and user is not signed in
+  // Cookie gate disabled — allow unlimited free checks
+  // useEffect(() => {
+  //   const alreadyUsed = document.cookie.includes("ats_free_used=1");
+  //   if (alreadyUsed && !session) setShowAuthGate(true);
+  // }, [session]);
   useEffect(() => {
-    const alreadyUsed = document.cookie.includes("ats_free_used=1");
-    if (alreadyUsed && !session) setShowAuthGate(true);
-  }, [session]);
+    setHasBrowserData(hasSavedBrowserData());
+  }, []);
 
   const validateFile = (f: File): string | null => {
     const ext = f.name.toLowerCase();
@@ -100,11 +103,6 @@ export default function AnalyzePage() {
   ];
 
   const handleAnalyze = async () => {
-    // Gate: if free check already used and not signed in, show login prompt
-    if (document.cookie.includes("ats_free_used=1") && !session) {
-      setShowAuthGate(true);
-      return;
-    }
     setIsAnalyzing(true);
     setError(null);
     setProgress(0);
@@ -166,15 +164,11 @@ export default function AnalyzePage() {
         input_mode: inputMode,
       });
 
-      sessionStorage.setItem("atsResult", JSON.stringify(data.result));
-      sessionStorage.setItem("atsFileName", inputMode === "file" ? (file?.name ?? "resume") : "pasted-resume");
-      sessionStorage.setItem("atsResumeText", data.resumeText ?? (inputMode === "paste" ? pastedResume : ""));
-      sessionStorage.setItem("atsJobDescription", jobDescription);
-      if (ghData) {
-        sessionStorage.setItem("atsGithubData", JSON.stringify(ghData));
-      } else {
-        sessionStorage.removeItem("atsGithubData");
-      }
+      const resumeTextFinal = data.resumeText ?? (inputMode === "paste" ? pastedResume : "");
+      const fileNameFinal = inputMode === "file" ? (file?.name ?? "resume") : "pasted-resume";
+
+      // Save to both localStorage (persistent) and sessionStorage (backward compat)
+      saveAnalysisResult(data.result, resumeTextFinal, fileNameFinal, jobDescription, ghData ?? undefined);
 
       setTimeout(() => router.push("/results"), 300);
     } catch {
@@ -189,41 +183,73 @@ export default function AnalyzePage() {
   const fileIcon = file?.name.endsWith(".pdf") ? "📄" : file?.name.endsWith(".docx") ? "📝" : "📃";
 
   return (
-    <main className="min-h-screen bg-[#020817]">
+    <main className="min-h-screen bg-[var(--bg-primary)]">
       <Navbar />
 
-      <div className="fixed inset-0 bg-grid opacity-25 pointer-events-none" />
-      <div className="fixed top-1/3 left-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
+      <div className="fixed top-1/3 left-1/4 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed bottom-1/3 right-1/4 w-80 h-80 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
-        className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-28 pb-20"
+        className="page-shell max-w-2xl pt-24 sm:pt-28 pb-16 sm:pb-20"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/5 text-cyan-400 text-xs font-medium mb-5">
+        <div className="page-hero page-hero-compact mb-10">
+          <div className="page-eyebrow mb-5">
             <Sparkles className="w-3 h-3" />
             Free · Instant · No Account Required
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3" style={{ fontFamily: 'var(--font-display)' }}>
             Check Your ATS Score
           </h1>
           <p className="text-slate-400 text-[15px]">
             Upload your resume and get a full ATS compatibility analysis in seconds.
           </p>
+          <div className="page-meta-row">
+            <span className="page-meta-pill">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+              Resume, JD, and results can auto-fill other tools
+            </span>
+            <span className="page-meta-pill">
+              <Info className="h-3.5 w-3.5 text-cyan-400" />
+              Clear saved browser data anytime
+            </span>
+          </div>
         </div>
 
+        {hasBrowserData && (
+          <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-white">Saved browser data is on</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                Your latest resume, job description, and analysis are stored in this browser so Cover Letter,
+                Interview Prep, and Templates can auto-fill them.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                clearSavedBrowserData();
+                setHasBrowserData(false);
+              }}
+              className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] px-3.5 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
+            >
+              Clear browser data
+            </button>
+          </div>
+        )}
+
         {/* Resume Input Card */}
-        <div className="glass rounded-2xl border border-white/8 overflow-hidden mb-5">
+        <div className="glass-card border border-white/[0.06] overflow-hidden mb-5">
 
           {/* Card header with mode switcher */}
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-white/5">
-            <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-              <FileText className="w-3 h-3 text-cyan-400" />
+            <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+              <FileText className="w-3 h-3 text-indigo-400" />
             </div>
             <h2 className="text-white font-semibold">Your Resume</h2>
 
@@ -301,7 +327,7 @@ export default function AnalyzePage() {
                   ) : (
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-16 h-16 rounded-2xl bg-white/4 border border-white/8 flex items-center justify-center">
-                        <Upload className="w-7 h-7 text-cyan-400" />
+                        <Upload className="w-7 h-7 text-indigo-400" />
                       </div>
                       <div>
                         <p className="text-white font-semibold text-lg">Drop your resume here</p>
@@ -326,7 +352,7 @@ export default function AnalyzePage() {
                       "Standard fonts work best (Arial, Calibri, Times)",
                     ].map((tip) => (
                       <div key={tip} className="flex items-start gap-2 text-xs text-slate-500">
-                        <div className="w-1 h-1 rounded-full bg-cyan-500/60 mt-1.5 flex-shrink-0" />
+                        <div className="w-1 h-1 rounded-full bg-indigo-500/60 mt-1.5 flex-shrink-0" />
                         {tip}
                       </div>
                     ))}
@@ -350,7 +376,7 @@ john@email.com | LinkedIn: linkedin.com/in/johndoe
 EXPERIENCE
 Senior Software Engineer at Acme Corp (2021–Present)
 • Led development of..."
-                    className="w-full h-48 sm:h-72 bg-white/3 border border-white/8 rounded-xl p-4 text-slate-300 text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-cyan-500/40 focus:bg-cyan-500/3 transition-all leading-relaxed font-mono"
+                    className="w-full h-48 sm:h-72 bg-white/3 border border-white/8 rounded-xl p-4 text-slate-300 text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-cyan-500/40 focus:bg-indigo-500/3 transition-all leading-relaxed font-mono"
                   />
                   <div className="absolute bottom-3 right-3 text-slate-600 text-[11px]">
                     {pastedResume.length} chars {pastedResume.length >= 80
@@ -359,8 +385,8 @@ Senior Software Engineer at Acme Corp (2021–Present)
                     }
                   </div>
                 </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/10 text-xs text-slate-400">
-                  <Info className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-indigo-500/5 border border-cyan-500/10 text-xs text-slate-400">
+                  <Info className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0 mt-0.5" />
                   Copy everything from your resume — contact info, experience, skills, education. The more text, the more accurate the analysis.
                 </div>
               </div>
@@ -369,7 +395,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
         </div>
 
         {/* ── Job Description (optional) ────────────────────────────────────── */}
-        <div className="glass rounded-2xl border border-white/8 overflow-hidden mb-3">
+        <div className="glass-card border border-white/[0.06] overflow-hidden mb-3">
           <button
             type="button"
             onClick={() => setShowJD((v) => !v)}
@@ -406,7 +432,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
         </div>
 
         {/* ── GitHub Profile (optional) ─────────────────────────────────────── */}
-        <div className="glass rounded-2xl border border-white/8 overflow-hidden mb-5">
+        <div className="glass-card border border-white/[0.06] overflow-hidden mb-5">
           <button
             type="button"
             onClick={() => setShowGithub((v) => !v)}
@@ -503,7 +529,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
               {/* Morphing spinner rings */}
               <div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-6">
                 <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-cyan-500/20"
+                  className="absolute inset-0 rounded-full border-2 border-indigo-500/20"
                   animate={{ rotate: 360 }}
                   transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                 />
@@ -513,13 +539,13 @@ Senior Software Engineer at Acme Corp (2021–Present)
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 />
                 <motion.div
-                  className="absolute inset-4 rounded-full border-2 border-cyan-500/40 border-t-cyan-400"
+                  className="absolute inset-4 rounded-full border-2 border-cyan-500/40 border-t-indigo-400"
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <motion.div
-                    className="w-3 h-3 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500"
+                    className="w-3 h-3 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500"
                     animate={{ scale: [1, 1.3, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   />
@@ -543,7 +569,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
               {/* Progress bar */}
               <div className="w-full max-w-[14rem] h-1.5 bg-white/5 rounded-full overflow-hidden mb-4">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-cyan-400 to-violet-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-indigo-400 to-violet-500 rounded-full"
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 />
@@ -584,7 +610,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
       {/* Auth gate modal */}
       {showAuthGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm glass rounded-2xl border border-white/8 p-6 sm:p-8 text-center shadow-2xl">
+          <div className="w-full max-w-sm glass-card border border-white/[0.06] p-6 sm:p-8 text-center shadow-2xl">
             <div className="w-14 h-14 rounded-2xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center mx-auto mb-5">
               <Lock className="w-6 h-6 text-violet-400" />
             </div>
@@ -596,7 +622,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
             </p>
             <Link
               href={`/login?callbackUrl=${encodeURIComponent("/analyze")}`}
-              className="flex items-center justify-center w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity mb-3"
+              className="flex items-center justify-center w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity mb-3"
             >
               Sign in — it&apos;s free
             </Link>

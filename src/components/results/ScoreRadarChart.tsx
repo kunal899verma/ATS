@@ -25,7 +25,7 @@ const CustomTooltip = ({
     return (
       <div className="glass rounded-lg px-3 py-2 border border-white/10 text-xs">
         <p className="text-slate-400">{payload[0].payload.label}</p>
-        <p className="text-cyan-400 font-bold text-sm">{payload[0].value}/100</p>
+        <p className="text-indigo-400 font-bold text-sm">{payload[0].value}/100</p>
       </div>
     );
   }
@@ -57,11 +57,11 @@ export default function ScoreRadarChart({ breakdown }: Props) {
         <Radar
           name="Score"
           dataKey="value"
-          stroke="#00d4ff"
-          fill="#00d4ff"
+          stroke="#6366f1"
+          fill="#6366f1"
           fillOpacity={0.12}
           strokeWidth={2}
-          dot={{ r: 3, fill: "#00d4ff", strokeWidth: 0 }}
+          dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }}
         />
         <Tooltip content={<CustomTooltip />} />
       </RadarChart>

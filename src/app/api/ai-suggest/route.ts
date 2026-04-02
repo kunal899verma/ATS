@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateWithFallback } from "@/lib/ai/provider";
 import type { AIResponse } from "@/types";
 
 export const runtime = "nodejs";
@@ -7,9 +7,9 @@ export const runtime = "nodejs";
 // ─── Rate limiting (3 req/min per IP) ────────────────────────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-function checkRateLimit(ip: string): boolean {
+function checkRL(ip: string): boolean {
   const now = Date.now();
-  const window = 60_000; // 1 minute
+  const window = 60_000;
   const limit = 3;
 
   const entry = rateLimitMap.get(ip);
@@ -24,12 +24,10 @@ function checkRateLimit(ip: string): boolean {
 
 // ─── JSON extraction helper ───────────────────────────────────────────────────
 function extractJSON(text: string): AIResponse {
-  // Try to find JSON block in the response
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("No JSON found in response");
   const parsed = JSON.parse(jsonMatch[0]);
 
-  // Validate required keys
   if (
     !Array.isArray(parsed.bulletImprovements) ||
     !Array.isArray(parsed.skillGaps) ||
@@ -44,21 +42,13 @@ function extractJSON(text: string): AIResponse {
 
 // ─── POST handler ─────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // 1. API key check
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json(
-      { error: "AI suggestions unavailable — missing API key" },
-      { status: 503 }
-    );
-  }
-
-  // 2. Rate limit
+  // 1. Rate limit
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
     "unknown";
 
-  if (!checkRateLimit(ip)) {
+  if (!checkRL(ip)) {
     return NextResponse.json(
       { error: "Too many requests — try again in a minute" },
       { status: 429 }
@@ -85,19 +75,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  if (!resumeText || !jobDescription) {
+  if (!resumeText) {
     return NextResponse.json(
-      { error: "resumeText and jobDescription are required" },
+      { error: "resumeText is required" },
       { status: 400 }
     );
   }
 
   // 4. Build prompt
-  const prompt = `You are an expert resume coach. A candidate has received an ATS score of ${atsScore}/100.
+  const hasJD = jobDescription && jobDescription.trim().length > 10;
+  const prompt = `You are an expert resume coach and ATS optimization specialist. A candidate has received an ATS score of ${atsScore}/100.
 Missing keywords: ${missingKeywords.join(", ") || "none"}.
 Score breakdown: ${JSON.stringify(scoreBreakdown)}.
+${hasJD ? `\nJob Description provided — tailor suggestions to match this specific role.` : `\nNo job description provided — give general ATS optimization suggestions to make this resume stronger, more impactful, and ATS-friendly.`}
 
-Analyze the resume against the job description and respond ONLY with a valid JSON object matching this exact shape:
+Analyze the resume${hasJD ? " against the job description" : ""} and respond ONLY with a valid JSON object matching this exact shape:
 
 {
   "bulletImprovements": [
@@ -111,33 +103,27 @@ Analyze the resume against the job description and respond ONLY with a valid JSO
 }
 
 Rules:
-- bulletImprovements: 3–5 items. Take weak bullets from the resume and rewrite them to be stronger, more specific, and keyword-rich.
-- skillGaps: 3–4 items. Skills from the JD that are missing or weak in the resume.
-- summaryRewrite: A 2–3 sentence professional summary optimized for this specific role.
-- quickWins: Exactly 3 specific actions the candidate can complete in under 15 minutes each.
+- bulletImprovements: 3–5 items. Take weak bullets from the resume and rewrite them to be stronger, more specific, and keyword-rich with quantified achievements.
+- skillGaps: 3–4 items. ${hasJD ? "Skills from the JD that are missing or weak in the resume." : "Important industry skills that are missing or underrepresented in the resume based on the candidate's role and experience level."}
+- summaryRewrite: A 2–3 sentence professional summary optimized for ${hasJD ? "this specific role" : "the candidate's target role based on their experience"}.
+- quickWins: Exactly 3 specific actions the candidate can complete in under 15 minutes each to improve their ATS score.
 - Do not include any text outside the JSON.
 
 RESUME:
 ${resumeText}
+${hasJD ? `\nJOB DESCRIPTION:\n${jobDescription}` : ""}`;
 
-JOB DESCRIPTION:
-${jobDescription}`;
-
-  // 5. Call Claude
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
+  // 5. Call Gemini via Vercel AI SDK
   let aiText: string;
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      messages: [{ role: "user", content: prompt }],
+    const { text } = await generateWithFallback({
+      prompt,
+      maxOutputTokens: 8000,
+      temperature: 0.7,
     });
-    const content = response.content[0];
-    if (content.type !== "text") throw new Error("Unexpected response type");
-    aiText = content.text;
+    aiText = text;
   } catch (err) {
-    console.error("Claude API error:", err);
+    console.error("Gemini API error:", err);
     return NextResponse.json(
       { error: "AI service error — please try again" },
       { status: 502 }
@@ -151,18 +137,12 @@ ${jobDescription}`;
   } catch {
     // Retry with explicit JSON instruction
     try {
-      const retryResponse = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        messages: [
-          { role: "user", content: prompt },
-          { role: "assistant", content: aiText },
-          { role: "user", content: "Please respond with only the JSON object, no other text." },
-        ],
+      const { text: retryText } = await generateWithFallback({
+        prompt: `${prompt}\n\nIMPORTANT: Respond with ONLY the JSON object. No markdown, no explanations, just the JSON.`,
+        maxOutputTokens: 8000,
+        temperature: 0.5,
       });
-      const retryContent = retryResponse.content[0];
-      if (retryContent.type !== "text") throw new Error("Unexpected type");
-      result = extractJSON(retryContent.text);
+      result = extractJSON(retryText);
     } catch {
       return NextResponse.json(
         { error: "Failed to parse AI response — please try again" },

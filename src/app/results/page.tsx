@@ -11,16 +11,26 @@ import { track } from "@vercel/analytics";
 import Navbar from "@/components/ui/Navbar";
 import ScoreRing from "@/components/ui/ScoreRing";
 import ProgressBar from "@/components/ui/ProgressBar";
+import { SkeletonResults } from "@/components/ui/Skeleton";
 import { useHistory } from "@/hooks/useHistory";
 import type { ATSResult, Suggestion, SectionScore, AIResponse } from "@/types";
 import type { GitHubAnalysis } from "@/app/api/github/route";
 import { EXPERIENCE_LABELS, EXPERIENCE_COLORS } from "@/lib/career-intelligence";
 import {
+  clearSavedBrowserData,
+  getLastResult,
+  getLastFileName,
+  getLastGithubData,
+  hasSavedBrowserData,
+  saveAISuggestions,
+} from "@/lib/storage";
+import {
   ArrowLeft, CheckCircle2, XCircle, AlertTriangle, TrendingUp,
   Zap, RefreshCw, ChevronDown, ChevronUp, Loader2, Info,
   Sparkles, AlertCircle, Users, Share2, Printer, Clock,
   BarChart3, History, X, Wand2, Copy, CheckCheck,
-  BookOpen, Target, Star, Lightbulb, ArrowRight, Trophy, Code2, ExternalLink,
+  BookOpen, Target, Star, Lightbulb, ArrowRight, Trophy, Code2, ExternalLink, FileDown,
+  FileText, MessageSquare,
 } from "lucide-react";
 
 // Dynamically import recharts charts (avoids hydration mismatch)
@@ -39,7 +49,7 @@ const PRIORITY_CONFIG = {
   critical: { color: "text-red-400", bg: "bg-red-500/8", border: "border-red-500/20", dot: "bg-red-500", label: "Critical" },
   high:     { color: "text-orange-400", bg: "bg-orange-500/8", border: "border-orange-500/20", dot: "bg-orange-500", label: "High" },
   medium:   { color: "text-amber-400", bg: "bg-amber-500/8", border: "border-amber-500/20", dot: "bg-amber-500", label: "Medium" },
-  low:      { color: "text-slate-400", bg: "bg-white/3", border: "border-white/8", dot: "bg-slate-500", label: "Low" },
+  low:      { color: "text-slate-400", bg: "bg-white/3", border: "border-white/[0.06]", dot: "bg-slate-500", label: "Low" },
 };
 
 const STATUS_CONFIG = {
@@ -84,21 +94,24 @@ export default function ResultsPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [copiedSuggestionId, setCopiedSuggestionId] = useState<string | null>(null);
   const [githubData, setGithubData] = useState<GitHubAnalysis | null>(null);
   const [scoreRevealed, setScoreRevealed] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
+  const [hasBrowserData, setHasBrowserData] = useState(false);
 
   useEffect(() => {
-    const ghRaw = sessionStorage.getItem("atsGithubData");
-    if (ghRaw) { try { setGithubData(JSON.parse(ghRaw)); } catch { /* ignore */ } }
+    const ghData = getLastGithubData();
+    if (ghData) setGithubData(ghData as GitHubAnalysis);
+    setHasBrowserData(hasSavedBrowserData());
   }, []);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("atsResult");
-    const name = sessionStorage.getItem("atsFileName");
-    if (!stored) { router.push("/analyze"); return; }
+    // Try new persistent storage first, then sessionStorage fallback
+    const parsed = getLastResult();
+    const name = getLastFileName();
+    if (!parsed) { router.push("/analyze"); return; }
     try {
-      const parsed: ATSResult = JSON.parse(stored);
       setResult(parsed);
       setFileName(name ?? "resume");
 
@@ -164,12 +177,18 @@ export default function ResultsPage() {
 
   const handleAISuggest = async () => {
     if (!result) return;
-    setAiLoading(true);
-    setAiError(null);
-    track("ai_suggestions_requested");
 
     const resumeText = sessionStorage.getItem("atsResumeText") ?? "";
     const jobDescription = sessionStorage.getItem("atsJobDescription") ?? "";
+
+    if (!resumeText.trim()) {
+      setAiError("Resume text not found. Please go back to the Analyze page and re-analyze your resume first.");
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError(null);
+    track("ai_suggestions_requested");
 
     try {
       const res = await fetch("/api/ai-suggest", {
@@ -177,7 +196,7 @@ export default function ResultsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           resumeText,
-          jobDescription,
+          jobDescription: jobDescription || "",
           atsScore: result.overallScore,
           missingKeywords: result.keywordAnalysis.missingKeywords,
           scoreBreakdown: result.scoreBreakdown,
@@ -187,8 +206,9 @@ export default function ResultsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Unknown error");
       setAiResult(data as AIResponse);
+      saveAISuggestions(data as AIResponse);
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : "Failed to get AI suggestions");
+      setAiError(err instanceof Error ? err.message : "Failed to get AI suggestions. Please try again.");
     } finally {
       setAiLoading(false);
     }
@@ -199,6 +219,44 @@ export default function ResultsPage() {
     await navigator.clipboard.writeText(aiResult.summaryRewrite);
     setCopiedSummary(true);
     setTimeout(() => setCopiedSummary(false), 2000);
+  };
+
+  const handleCopySuggestionText = async (key: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedSuggestionId(key);
+    setTimeout(() => {
+      setCopiedSuggestionId((current) => (current === key ? null : current));
+    }, 1800);
+  };
+
+  const [buildingResume, setBuildingResume] = useState(false);
+
+  const handleBuildATSResume = async () => {
+    const resumeText = sessionStorage.getItem("atsResumeText") ?? "";
+    if (!resumeText.trim()) return;
+
+    setBuildingResume(true);
+    try {
+      const res = await fetch("/api/ai/parse-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText,
+          aiSuggestions: aiResult ?? null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to parse resume");
+
+      // Save parsed resume data to sessionStorage for templates page
+      sessionStorage.setItem("atsPrefillResume", JSON.stringify(data));
+      router.push("/templates");
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Failed to build resume. Please try again.");
+    } finally {
+      setBuildingResume(false);
+    }
   };
 
   const loadFromHistory = (entry: typeof history[0]) => {
@@ -212,16 +270,18 @@ export default function ResultsPage() {
 
   if (loading || !result) {
     return (
-      <div className="min-h-screen bg-[#020817] flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-          <p className="text-slate-400 text-sm">Loading results...</p>
-        </motion.div>
-      </div>
+      <main className="min-h-screen bg-[var(--bg-primary)]">
+        <Navbar />
+        <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
+        <div className="page-shell pt-24 sm:pt-28 pb-14 sm:pb-16">
+          <div className="mb-6 space-y-2">
+            <div className="h-4 w-32 rounded-full bg-white/6 animate-pulse" />
+            <div className="h-9 w-64 rounded-2xl bg-white/6 animate-pulse" />
+            <div className="h-4 w-40 rounded-full bg-white/6 animate-pulse" />
+          </div>
+          <SkeletonResults />
+        </div>
+      </main>
     );
   }
 
@@ -231,16 +291,40 @@ export default function ResultsPage() {
   const keywords = showAllKeywords
     ? result.keywordAnalysis.matches
     : result.keywordAnalysis.matches.slice(0, 20);
+  const recommendedAction =
+    criticalCount > 0
+      ? {
+          label: "Fix critical issues first",
+          description: "Start with the highest-impact resume fixes before generating new application materials.",
+          buttonLabel: `Open Fix List (${criticalCount})`,
+          accent: "border-red-500/20 bg-red-500/[0.04] text-red-300",
+          onClick: () => handleTabChange("suggestions"),
+        }
+      : result.keywordAnalysis.topMissingKeywords.length > 0
+        ? {
+            label: "Review missing keywords next",
+            description: "Your resume is close, but the job-specific language still needs tightening before you apply.",
+            buttonLabel: "Open Keywords",
+            accent: "border-amber-500/20 bg-amber-500/[0.04] text-amber-300",
+            onClick: () => handleTabChange("keywords"),
+          }
+        : {
+            label: "You look ready to tailor this application",
+            description: "Your next best move is to reuse this resume in the Cover Letter and Interview Prep tools.",
+            buttonLabel: "Generate Cover Letter",
+            accent: "border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-300",
+            href: "/cover-letter",
+          };
 
   return (
-    <main className="min-h-screen bg-[#020817]" ref={printRef}>
+    <main className="min-h-screen bg-[var(--bg-primary)]" ref={printRef}>
       <Navbar />
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none print:hidden" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+      <div className="page-shell pt-24 sm:pt-28 pb-14 sm:pb-16">
 
         {/* ── Top bar ───────────────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 print:hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 print:hidden">
           <div>
             <Link href="/analyze" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-white text-xs transition-colors mb-1.5">
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Analyzer
@@ -249,12 +333,12 @@ export default function ResultsPage() {
             <p className="text-slate-500 text-xs mt-0.5 truncate max-w-xs">{fileName}</p>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end min-w-0">
             {/* History button */}
             {history.length > 1 && (
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className="btn-ghost flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs"
+                className="btn-ghost flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs"
               >
                 <History className="w-3.5 h-3.5" />
                 History ({history.length})
@@ -263,7 +347,7 @@ export default function ResultsPage() {
             {/* Share */}
             <button
               onClick={handleShare}
-              className="btn-ghost flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs"
+              className="btn-ghost flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs"
             >
               <Share2 className="w-3.5 h-3.5" />
               {shareState === "copied" ? "Copied!" : "Share"}
@@ -271,19 +355,101 @@ export default function ResultsPage() {
             {/* Print */}
             <button
               onClick={handlePrint}
-              className="btn-ghost flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs"
+              className="btn-ghost flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs"
             >
               <Printer className="w-3.5 h-3.5" /> Print
             </button>
-            <Link href="/analyze" className="btn-ghost flex items-center gap-2 px-4 py-2 rounded-lg text-sm">
+            <Link href="/analyze" className="btn-primary col-span-2 sm:col-span-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm">
               <RefreshCw className="w-3.5 h-3.5" /> New Analysis
             </Link>
           </div>
         </div>
 
+        {/* Quick Actions — Connected Flow */}
+        <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-3 print:hidden">
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Recommended Next Step</p>
+          <div className="glass-card border border-white/[0.06] p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${recommendedAction.accent}`}>
+                  Recommended
+                </span>
+                <h3 className="mt-3 text-white text-lg font-semibold">{recommendedAction.label}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-400 max-w-2xl">{recommendedAction.description}</p>
+              </div>
+              {"href" in recommendedAction ? (
+                <Link
+                  href={recommendedAction.href}
+                  className="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold"
+                >
+                  {recommendedAction.buttonLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={recommendedAction.onClick}
+                  className="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold"
+                >
+                  {recommendedAction.buttonLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href="/cover-letter"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-medium hover:bg-violet-500/15 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Cover Letter
+              </Link>
+              <Link
+                href="/interview-prep"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium hover:bg-indigo-500/15 transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Interview Prep
+              </Link>
+              <Link
+                href="/templates"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/15 transition-colors"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                Resume Builder
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {hasBrowserData && (
+          <div className="mt-5 rounded-2xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4 print:hidden">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-white">This analysis is saved in your browser</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                  We keep your latest resume, job description, and results locally so other tools can auto-fill.
+                  You can clear that browser data any time.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  clearSavedBrowserData();
+                  clearHistory();
+                  setHasBrowserData(false);
+                }}
+                className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] px-3.5 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
+              >
+                Clear browser data
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── History panel ────────────────────────────────────────────────── */}
         {showHistory && history.length > 1 && (
-          <div className="glass rounded-2xl border border-white/8 p-5 mb-5 animate-fade-in print:hidden">
+          <div className="glass-card border border-white/[0.06] p-5 mb-5 animate-fade-in print:hidden">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-violet-400" />
@@ -335,7 +501,7 @@ export default function ResultsPage() {
         </div>
 
         {/* ── Hero Score Card ─────────────────────────────────────────────── */}
-        <div className="glass rounded-2xl border border-white/8 p-4 sm:p-6 lg:p-8 mb-5 print:border print:border-gray-200 print:shadow-none">
+        <div className="glass-card border border-white/[0.06] p-4 sm:p-6 lg:p-8 mb-5 print:border print:border-gray-200 print:shadow-none">
           <div className="flex flex-col lg:flex-row items-center gap-5 sm:gap-8">
             {/* Score ring */}
             <div className="flex-shrink-0">
@@ -394,6 +560,33 @@ export default function ResultsPage() {
             <div className="hidden sm:block flex-shrink-0 w-full lg:w-[280px] print:hidden">
               <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wider text-center mb-2">Score Radar</p>
               <ScoreRadarChart breakdown={result.scoreBreakdown} />
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card border border-cyan-500/15 bg-cyan-500/[0.03] p-4 mb-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-400 mb-2">How to read this score</p>
+              <h3 className="text-white font-semibold text-base">Use the score as a calibrated benchmark, not a promise from a real ATS</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-400 max-w-3xl">
+                The numbered sections and keyword checks are deterministic signals we can measure directly.
+                AI features help you improve the resume, but they do not change the underlying scoring rules.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                Scored checks are measurable
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300">
+                <Wand2 className="h-3.5 w-3.5 text-violet-400" />
+                AI rewrite is optional guidance
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300">
+                <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
+                Impact estimates are directional
+              </span>
             </div>
           </div>
         </div>
@@ -481,7 +674,7 @@ export default function ResultsPage() {
                 return (
                   <motion.div
                     key={section.name}
-                    className="glass rounded-2xl p-5 border border-white/7 hover:border-white/12 transition-colors"
+                    className="glass-card p-5 border border-white/7 hover:border-white/12 transition-colors"
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: i * 0.07, ease: [0.25, 0.1, 0.25, 1] }}
@@ -509,7 +702,7 @@ export default function ResultsPage() {
 
             {/* Score improvement potential */}
             {criticalCount > 0 && (
-              <div className="glass rounded-2xl p-5 border border-amber-500/15 bg-amber-500/3">
+              <div className="glass-card p-5 border border-amber-500/15 bg-amber-500/3">
                 <div className="flex items-start gap-3">
                   <TrendingUp className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                   <div>
@@ -535,23 +728,23 @@ export default function ResultsPage() {
           <div className="space-y-5 animate-fade-in">
             {/* Summary row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="glass rounded-2xl p-5 border border-emerald-500/20 text-center">
+              <div className="glass-card p-5 border border-emerald-500/20 text-center">
                 <div className="text-3xl font-bold text-emerald-400">{result.keywordAnalysis.matchedKeywords.length}</div>
                 <div className="text-slate-400 text-xs mt-1">Exact Matches</div>
               </div>
-              <div className="glass rounded-2xl p-5 border border-amber-500/20 text-center">
+              <div className="glass-card p-5 border border-amber-500/20 text-center">
                 <div className="text-3xl font-bold text-amber-400">{result.keywordAnalysis.synonymMatches.length}</div>
                 <div className="text-slate-400 text-xs mt-1">Synonym Matches</div>
                 <div className="text-slate-600 text-[10px] mt-0.5">e.g., &quot;JS&quot; → &quot;JavaScript&quot;</div>
               </div>
-              <div className="glass rounded-2xl p-5 border border-red-500/20 text-center">
+              <div className="glass-card p-5 border border-red-500/20 text-center">
                 <div className="text-3xl font-bold text-red-400">{result.keywordAnalysis.missingKeywords.length}</div>
                 <div className="text-slate-400 text-xs mt-1">Missing Keywords</div>
               </div>
             </div>
 
             {/* Bar chart */}
-            <div className="glass rounded-2xl p-5 border border-white/7">
+            <div className="glass-card p-5 border border-white/7">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-white font-semibold text-sm">Keyword Frequency Chart</h3>
@@ -567,7 +760,7 @@ export default function ResultsPage() {
 
             {/* Top missing - highlighted */}
             {result.keywordAnalysis.topMissingKeywords.length > 0 && (
-              <div className="glass rounded-2xl p-5 border border-red-500/15 bg-red-500/3">
+              <div className="glass-card p-5 border border-red-500/15 bg-red-500/3">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle className="w-4 h-4 text-red-400" />
                   <h3 className="text-white font-semibold text-sm">Top Missing Keywords (Add These First)</h3>
@@ -584,7 +777,7 @@ export default function ResultsPage() {
             )}
 
             {/* Keyword detail table */}
-            <div className="glass rounded-2xl border border-white/7 overflow-hidden">
+            <div className="glass-card border border-white/7 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-white/5 flex items-center justify-between">
                 <h3 className="text-white font-semibold text-sm">All Keyword Matches</h3>
                 <div className="flex items-center gap-3 text-[11px]">
@@ -640,7 +833,7 @@ export default function ResultsPage() {
         {/* ── Tab: Recruiter Score ─────────────────────────────────────────── */}
         {activeTab === "recruiter" && (
           <div className="space-y-5 animate-fade-in">
-            <div className="glass rounded-2xl p-5 border border-white/7">
+            <div className="glass-card p-5 border border-white/7">
               <div className="flex items-start gap-3 mb-5">
                 <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center flex-shrink-0">
                   <Users className="w-4 h-4 text-pink-400" />
@@ -679,7 +872,7 @@ export default function ResultsPage() {
               </div>
             </div>
 
-            <div className="glass rounded-2xl p-5 border border-white/7">
+            <div className="glass-card p-5 border border-white/7">
               <div className="flex items-center gap-2 mb-4">
                 <Info className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-white font-semibold text-sm">Recruiter Feedback</h3>
@@ -712,7 +905,7 @@ export default function ResultsPage() {
         {activeTab === "suggestions" && (
           <div className="space-y-3 animate-fade-in">
             {result.suggestions.length === 0 && (
-              <div className="glass rounded-2xl p-10 border border-emerald-500/20 text-center">
+              <div className="glass-card p-10 border border-emerald-500/20 text-center">
                 <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
                 <h3 className="text-white font-semibold mb-1">No major issues found</h3>
                 <p className="text-slate-400 text-sm">Your resume looks well-optimized for this role. Keep applying!</p>
@@ -728,7 +921,7 @@ export default function ResultsPage() {
               return (
                 <>
                   {/* ── Score Impact Banner ─────────────────────────── */}
-                  <div className="glass rounded-2xl border border-white/8 p-4 flex flex-wrap items-center gap-4">
+                  <div className="glass-card border border-white/[0.06] p-4 flex flex-wrap items-center gap-4">
                     <div className="flex-1">
                       <p className="text-white font-semibold text-sm">Fix all issues → up to +{totalEstGain} pts</p>
                       <p className="text-slate-500 text-xs mt-0.5">
@@ -754,7 +947,7 @@ export default function ResultsPage() {
 
                   {/* ── Quick Wins ──────────────────────────────────── */}
                   {quickWins.length > 0 && (
-                    <div className="glass rounded-2xl border border-emerald-500/20 bg-emerald-500/3 overflow-hidden">
+                    <div className="glass-card border border-emerald-500/20 bg-emerald-500/3 overflow-hidden">
                       <div className="flex items-center gap-2 px-5 py-3 border-b border-emerald-500/15">
                         <Zap className="w-3.5 h-3.5 text-emerald-400" />
                         <span className="text-emerald-300 font-semibold text-sm">Quick Wins</span>
@@ -790,7 +983,7 @@ export default function ResultsPage() {
                         variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
                         transition={{ duration: 0.35 }}
                       >
-                      <div className={`glass rounded-2xl border ${cfg.border} overflow-hidden`}>
+                      <div className={`glass-card border ${cfg.border} overflow-hidden`}>
                         <button
                           className="w-full flex items-start gap-4 p-5 text-left hover:bg-white/2 transition-colors"
                           onClick={() => setExpandedSuggestion(isOpen ? null : s.id)}
@@ -827,7 +1020,7 @@ export default function ResultsPage() {
 
                             {/* Before / After */}
                             {hasBeforeAfter && (
-                              <div className="rounded-xl overflow-hidden border border-white/8">
+                              <div className="rounded-xl overflow-hidden border border-white/[0.06]">
                                 <div className="flex items-center gap-2 px-4 py-2 bg-red-500/8 border-b border-white/5">
                                   <div className="w-2 h-2 rounded-full bg-red-500" />
                                   <span className="text-red-400 text-[11px] font-semibold uppercase tracking-wider">Current (problematic)</span>
@@ -846,13 +1039,33 @@ export default function ResultsPage() {
                                 <div className="px-4 py-3 bg-black/20">
                                   <p className="text-slate-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{s.improvedText}</p>
                                 </div>
+                                <div className="flex justify-end border-t border-white/5 bg-white/[0.02] px-4 py-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopySuggestionText(`${s.id}-improved`, s.improvedText ?? "")}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/15"
+                                  >
+                                    {copiedSuggestionId === `${s.id}-improved` ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                    {copiedSuggestionId === `${s.id}-improved` ? "Copied" : "Copy improved text"}
+                                  </button>
+                                </div>
                               </div>
                             )}
 
                             {/* Generic example (no before/after) */}
                             {!hasBeforeAfter && s.example && (
                               <div className="p-3.5 rounded-xl bg-black/30 border border-white/5">
-                                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">Example</p>
+                                <div className="mb-2 flex items-center justify-between gap-3">
+                                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Example</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopySuggestionText(`${s.id}-example`, s.example ?? "")}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+                                  >
+                                    {copiedSuggestionId === `${s.id}-example` ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                    {copiedSuggestionId === `${s.id}-example` ? "Copied" : "Copy"}
+                                  </button>
+                                </div>
                                 <p className="text-slate-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{s.example}</p>
                               </div>
                             )}
@@ -874,19 +1087,19 @@ export default function ResultsPage() {
           <div className="space-y-5 animate-fade-in print:hidden">
             {/* Pre-generate state */}
             {!aiResult && !aiLoading && (
-              <div className="glass rounded-2xl p-8 border border-violet-500/15 bg-violet-500/3 text-center">
+              <div className="glass-card p-8 border border-violet-500/15 bg-violet-500/3 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 flex items-center justify-center mx-auto mb-4">
                   <Wand2 className="w-7 h-7 text-violet-400" />
                 </div>
                 <h3 className="text-white font-bold text-lg mb-2">AI Resume Rewriter</h3>
                 <p className="text-slate-400 text-sm mb-1 max-w-md mx-auto">
-                  Claude AI will analyze your resume against the job description and generate:
+                  AI will analyze your resume and make it ATS-friendly:
                 </p>
                 <ul className="text-slate-500 text-xs space-y-1 mb-6 max-w-xs mx-auto">
                   <li>• 3–5 rewritten bullet points (stronger, keyword-rich)</li>
-                  <li>• Skill gap analysis with fix guidance</li>
-                  <li>• Custom professional summary for this role</li>
-                  <li>• 3 quick wins you can apply in under 15 min</li>
+                  <li>• Skill gap analysis with actionable fix guidance</li>
+                  <li>• Custom professional summary tailored to your role</li>
+                  <li>• 3 quick wins you can apply in under 15 minutes</li>
                 </ul>
                 {aiError && (
                   <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -899,16 +1112,16 @@ export default function ResultsPage() {
                 >
                   <Wand2 className="w-4 h-4" /> Generate AI Suggestions
                 </button>
-                <p className="text-slate-600 text-xs mt-3">Powered by Claude Sonnet · ~15 seconds</p>
+                <p className="text-slate-600 text-xs mt-3">Powered by Gemini AI · Free · ~5 seconds</p>
               </div>
             )}
 
             {/* Loading state */}
             {aiLoading && (
-              <div className="glass rounded-2xl p-12 border border-violet-500/15 text-center">
+              <div className="glass-card p-12 border border-violet-500/15 text-center">
                 <Loader2 className="w-8 h-8 text-violet-400 animate-spin mx-auto mb-4" />
                 <p className="text-white font-semibold mb-1">Analyzing your resume...</p>
-                <p className="text-slate-500 text-sm">Claude is reading the job description and generating personalized suggestions</p>
+                <p className="text-slate-500 text-sm">AI is reading the job description and generating personalized suggestions</p>
               </div>
             )}
 
@@ -916,7 +1129,7 @@ export default function ResultsPage() {
             {aiResult && !aiLoading && (
               <>
                 {/* Quick Wins */}
-                <div className="glass rounded-2xl p-5 border border-emerald-500/20 bg-emerald-500/3">
+                <div className="glass-card p-5 border border-emerald-500/20 bg-emerald-500/3">
                   <div className="flex items-center gap-2 mb-4">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <h3 className="text-white font-semibold text-sm">Quick Wins — Under 15 Minutes Each</h3>
@@ -934,7 +1147,7 @@ export default function ResultsPage() {
                 </div>
 
                 {/* Bullet Improvements */}
-                <div className="glass rounded-2xl p-5 border border-white/7">
+                <div className="glass-card p-5 border border-white/7">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="w-4 h-4 text-cyan-400" />
                     <h3 className="text-white font-semibold text-sm">Bullet Point Rewrites</h3>
@@ -959,7 +1172,7 @@ export default function ResultsPage() {
                 </div>
 
                 {/* Skill Gaps */}
-                <div className="glass rounded-2xl p-5 border border-white/7">
+                <div className="glass-card p-5 border border-white/7">
                   <div className="flex items-center gap-2 mb-4">
                     <AlertTriangle className="w-4 h-4 text-amber-400" />
                     <h3 className="text-white font-semibold text-sm">Skill Gaps to Address</h3>
@@ -978,7 +1191,7 @@ export default function ResultsPage() {
                 </div>
 
                 {/* Summary Rewrite */}
-                <div className="glass rounded-2xl p-5 border border-violet-500/20 bg-violet-500/3">
+                <div className="glass-card p-5 border border-violet-500/20 bg-violet-500/3">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Wand2 className="w-4 h-4 text-violet-400" />
@@ -995,6 +1208,32 @@ export default function ResultsPage() {
                   <p className="text-slate-200 text-sm leading-relaxed bg-black/20 rounded-xl p-4 border border-white/5">
                     {aiResult.summaryRewrite}
                   </p>
+                </div>
+
+                {/* Build ATS Resume CTA */}
+                <div className="glass-card p-6 border border-indigo-500/25 bg-gradient-to-r from-indigo-500/5 to-violet-500/5">
+                  <div className="flex flex-col sm:flex-row items-center gap-5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+                      <FileDown className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
+                      <h3 className="text-white font-bold text-base mb-1">Build Your ATS-Optimized Resume</h3>
+                      <p className="text-slate-400 text-sm">
+                        AI will apply all improvements — rewritten bullets, optimized summary, missing skills — and create a ready-to-download resume.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleBuildATSResume}
+                      disabled={buildingResume}
+                      className="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm whitespace-nowrap disabled:opacity-50"
+                    >
+                      {buildingResume ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Building...</>
+                      ) : (
+                        <><FileDown className="w-4 h-4" /> Build My ATS Resume</>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Regenerate */}
@@ -1015,7 +1254,7 @@ export default function ResultsPage() {
         {activeTab === "career" && (
           <div className="space-y-5 animate-fade-in print:hidden">
             {!result.careerIntelligence ? (
-              <div className="glass rounded-2xl p-8 border border-white/7 text-center">
+              <div className="glass-card p-8 border border-white/7 text-center">
                 <p className="text-slate-400">Career intelligence not available for this resume.</p>
               </div>
             ) : (() => {
@@ -1033,7 +1272,7 @@ export default function ResultsPage() {
               return (
                 <>
                   {/* Header — level + primary tech + stack */}
-                  <div className="glass rounded-2xl p-5 border border-white/7">
+                  <div className="glass-card p-5 border border-white/7">
                     <div className="flex flex-wrap items-center gap-3 mb-4">
                       <div className={`tag border ${levelCfg.bg} ${levelCfg.text} ${levelCfg.border} text-sm font-semibold px-3 py-1`}>
                         {EXPERIENCE_LABELS[ci.experienceLevel]}
@@ -1060,7 +1299,7 @@ export default function ResultsPage() {
                   </div>
 
                   {/* Target Roles */}
-                  <div className="glass rounded-2xl p-5 border border-white/7">
+                  <div className="glass-card p-5 border border-white/7">
                     <div className="flex items-center gap-2 mb-4">
                       <Trophy className="w-4 h-4 text-amber-400" />
                       <h3 className="text-white font-semibold text-sm">Positions to Target</h3>
@@ -1088,7 +1327,7 @@ export default function ResultsPage() {
                   </div>
 
                   {/* Next Skills to Learn */}
-                  <div className="glass rounded-2xl p-5 border border-white/7">
+                  <div className="glass-card p-5 border border-white/7">
                     <div className="flex items-center gap-2 mb-4">
                       <BookOpen className="w-4 h-4 text-cyan-400" />
                       <h3 className="text-white font-semibold text-sm">Skills to Learn Next</h3>
@@ -1117,7 +1356,7 @@ export default function ResultsPage() {
                   </div>
 
                   {/* Level-Up Goals */}
-                  <div className="glass rounded-2xl p-5 border border-emerald-500/15 bg-emerald-500/3">
+                  <div className="glass-card p-5 border border-emerald-500/15 bg-emerald-500/3">
                     <div className="flex items-center gap-2 mb-4">
                       <TrendingUp className="w-4 h-4 text-emerald-400" />
                       <h3 className="text-white font-semibold text-sm">Level-Up Goals — Reach the Next Tier</h3>
@@ -1135,7 +1374,7 @@ export default function ResultsPage() {
                   </div>
 
                   {/* Resume Additions */}
-                  <div className="glass rounded-2xl p-5 border border-white/7">
+                  <div className="glass-card p-5 border border-white/7">
                     <div className="flex items-center gap-2 mb-4">
                       <Lightbulb className="w-4 h-4 text-amber-400" />
                       <h3 className="text-white font-semibold text-sm">Add These to Your Resume</h3>
@@ -1166,7 +1405,7 @@ export default function ResultsPage() {
 
         {/* ── GitHub Profile Card ──────────────────────────────────────────── */}
         {githubData && (
-          <div className="mt-6 glass rounded-2xl border border-emerald-500/20 overflow-hidden print:hidden">
+          <div className="mt-6 glass-card border border-emerald-500/20 overflow-hidden print:hidden">
             <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-white/5">
               <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
                 <Code2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -1216,7 +1455,7 @@ export default function ResultsPage() {
         )}
 
         {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-        <div className="mt-10 glass rounded-2xl border border-white/7 p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden">
+        <div className="mt-10 glass-card border border-white/7 p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-4 h-4 text-cyan-400" />

@@ -10,7 +10,7 @@ import {
 } from "@/components/templates/ResumeTemplates";
 import {
   Plus, Trash2, Download, Zap, CheckCircle2, AlertTriangle,
-  ChevronDown, ChevronUp, Shuffle, RotateCcw, Eye,
+  ChevronDown, ChevronUp, Shuffle, RotateCcw, Eye, X, Upload, Loader2,
 } from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -37,7 +37,7 @@ function Section({ title, open, onToggle, children, badge }: {
         <span className="text-white font-medium text-sm">{title}</span>
         <div className="flex items-center gap-2">
           {badge !== undefined && badge > 0 && (
-            <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded-full font-semibold">{badge}</span>
+            <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-semibold">{badge}</span>
           )}
           {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
         </div>
@@ -60,7 +60,7 @@ function Field({ label, value, onChange, placeholder, type = "text" }: {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 transition-colors"
+        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/40 transition-colors"
       />
     </div>
   );
@@ -77,7 +77,7 @@ function TextArea({ label, value, onChange, placeholder, rows = 3 }: {
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 transition-colors resize-y"
+        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/40 transition-colors resize-y"
       />
     </div>
   );
@@ -111,6 +111,129 @@ export default function TemplatesPage() {
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  // Load pre-filled resume data from AI analysis (if navigated from results page)
+  const [prefilled, setPrefilled] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const handleImportResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+
+    try {
+      // First parse the file to get text
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      const parseRes = await fetch("/api/analyze", { method: "POST", body: formData });
+      const parseData = await parseRes.json();
+
+      if (!parseData.success || !parseData.resumeText) {
+        throw new Error("Failed to parse resume file");
+      }
+
+      // Then use AI to structure it
+      const structureRes = await fetch("/api/ai/parse-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText: parseData.resumeText }),
+      });
+
+      const structured = await structureRes.json();
+      if (structureRes.ok && structured.personal) {
+        // Ensure IDs exist
+        const ensureId = (arr: Array<Record<string, unknown>>, prefix: string) =>
+          (arr || []).map((item: Record<string, unknown>, i: number) => ({ ...item, id: item.id || `${prefix}${i + 1}` }));
+
+        const resumeData: ResumeData = {
+          personal: {
+            name: structured.personal?.name ?? "",
+            title: structured.personal?.title ?? "",
+            email: structured.personal?.email ?? "",
+            phone: structured.personal?.phone ?? "",
+            location: structured.personal?.location ?? "",
+            linkedin: structured.personal?.linkedin ?? "",
+            github: structured.personal?.github ?? "",
+            website: structured.personal?.website ?? "",
+          },
+          summary: structured.summary ?? "",
+          experience: ensureId(structured.experience ?? [], "e") as WorkExp[],
+          education: ensureId(structured.education ?? [], "edu") as Edu[],
+          skills: ensureId(structured.skills ?? [], "s") as SkillGroup[],
+          projects: ensureId(structured.projects ?? [], "p") as Project[],
+          certifications: ensureId(structured.certifications ?? [], "c") as Cert[],
+        };
+
+        setData(resumeData);
+        setPrefilled(true);
+        setOpenSections({
+          personal: true,
+          summary: !!resumeData.summary,
+          experience: resumeData.experience.length > 0,
+          education: resumeData.education.length > 0,
+          skills: resumeData.skills.length > 0,
+          projects: resumeData.projects.length > 0,
+          certifications: resumeData.certifications.length > 0,
+        });
+      } else {
+        throw new Error(structured.error || "Failed to structure resume");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to import resume. Try pasting text manually.");
+    } finally {
+      setImporting(false);
+      e.target.value = ""; // Reset file input
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("atsPrefillResume");
+      if (!saved) return;
+
+      const parsed = JSON.parse(saved);
+      // Ensure IDs exist on all array items
+      const ensureId = (arr: Array<Record<string, unknown>>, prefix: string) =>
+        (arr || []).map((item, i) => ({ ...item, id: item.id || `${prefix}${i + 1}` }));
+
+      const resumeData: ResumeData = {
+        personal: {
+          name: parsed.personal?.name ?? "",
+          title: parsed.personal?.title ?? "",
+          email: parsed.personal?.email ?? "",
+          phone: parsed.personal?.phone ?? "",
+          location: parsed.personal?.location ?? "",
+          linkedin: parsed.personal?.linkedin ?? "",
+          github: parsed.personal?.github ?? "",
+          website: parsed.personal?.website ?? "",
+        },
+        summary: parsed.summary ?? "",
+        experience: ensureId(parsed.experience ?? [], "e") as WorkExp[],
+        education: ensureId(parsed.education ?? [], "edu") as Edu[],
+        skills: ensureId(parsed.skills ?? [], "s") as SkillGroup[],
+        projects: ensureId(parsed.projects ?? [], "p") as Project[],
+        certifications: ensureId(parsed.certifications ?? [], "c") as Cert[],
+      };
+
+      setData(resumeData);
+      setPrefilled(true);
+      // Open all sections that have content
+      setOpenSections({
+        personal: true,
+        summary: !!resumeData.summary,
+        experience: resumeData.experience.length > 0,
+        education: resumeData.education.length > 0,
+        skills: resumeData.skills.length > 0,
+        projects: resumeData.projects.length > 0,
+        certifications: resumeData.certifications.length > 0,
+      });
+      // Clear so it doesn't reload on next visit
+      sessionStorage.removeItem("atsPrefillResume");
+    } catch {
+      // Ignore parse errors
+    }
   }, []);
 
   const toggle = (key: string) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
@@ -175,7 +298,7 @@ export default function TemplatesPage() {
       `}</style>
 
       <Navbar />
-      <main className="min-h-screen bg-[#020817] text-slate-300 pt-16">
+      <main className="min-h-screen bg-[var(--bg-primary)] text-slate-300 pt-16">
         {/* Header */}
         <div className="bg-[#060f23] border-b border-white/5 px-4 py-5">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -190,6 +313,13 @@ export default function TemplatesPage() {
               >
                 <Shuffle className="w-3.5 h-3.5" /> Load Sample
               </button>
+              <label
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/8 border border-white/10 text-slate-300 text-xs transition-colors cursor-pointer"
+              >
+                {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                {importing ? "Importing..." : "Import Resume"}
+                <input type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={handleImportResume} disabled={importing} />
+              </label>
               <button
                 onClick={() => setData(BLANK_RESUME_DATA)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/8 border border-white/10 text-slate-300 text-xs transition-colors"
@@ -204,13 +334,29 @@ export default function TemplatesPage() {
               </button>
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-indigo-500/20"
               >
                 <Download className="w-4 h-4" /> Download PDF
               </button>
             </div>
           </div>
         </div>
+
+        {/* AI Pre-filled Banner */}
+        {prefilled && (
+          <div className="max-w-7xl mx-auto px-4 pt-4">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-emerald-300 font-semibold text-sm">Resume pre-filled with AI improvements!</p>
+                <p className="text-emerald-400/70 text-xs mt-0.5">Your resume data has been parsed and ATS-optimized. Review each section, make any edits, then download.</p>
+              </div>
+              <button onClick={() => setPrefilled(false)} className="text-emerald-400/50 hover:text-emerald-400 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
           {/* Template Selector */}
@@ -223,8 +369,8 @@ export default function TemplatesPage() {
                   onClick={() => setSelectedTemplate(t.id)}
                   className={`relative text-left p-4 rounded-xl border transition-all ${
                     selectedTemplate === t.id
-                      ? "border-cyan-500/50 bg-cyan-500/8"
-                      : "border-white/8 bg-white/3 hover:border-white/15 hover:bg-white/5"
+                      ? "border-indigo-500/50 bg-indigo-500/8"
+                      : "border-white/[0.06] bg-white/3 hover:border-white/15 hover:bg-white/5"
                   }`}
                 >
                   {/* Color swatch */}
@@ -241,7 +387,7 @@ export default function TemplatesPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-white font-semibold text-sm">{t.name}</span>
-                    {selectedTemplate === t.id && <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />}
+                    {selectedTemplate === t.id && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
                   </div>
                   <p className="text-slate-500 text-[10px] mt-0.5 leading-snug">{t.description}</p>
                   <span className={`mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${ATS_COLOR[t.atsScore]}`}>
@@ -286,7 +432,7 @@ export default function TemplatesPage() {
               {/* Experience */}
               <Section title="Work Experience" open={openSections.experience} onToggle={() => toggle("experience")} badge={data.experience.length}>
                 {data.experience.map((exp, idx) => (
-                  <div key={exp.id} className="border border-white/8 rounded-xl p-3 space-y-2.5 relative">
+                  <div key={exp.id} className="border border-white/[0.06] rounded-xl p-3 space-y-2.5 relative">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[11px] text-slate-400 font-semibold">Position {idx + 1}</span>
                       {data.experience.length > 1 && (
@@ -314,7 +460,7 @@ export default function TemplatesPage() {
                     <p className="text-[10px] text-slate-600">Tip: Start each bullet with an action verb + add a number</p>
                   </div>
                 ))}
-                <button onClick={addExp} className="flex items-center gap-1.5 text-cyan-400 text-xs hover:text-cyan-300 transition-colors">
+                <button onClick={addExp} className="flex items-center gap-1.5 text-indigo-400 text-xs hover:text-cyan-300 transition-colors">
                   <Plus className="w-3.5 h-3.5" /> Add Another Position
                 </button>
               </Section>
@@ -322,7 +468,7 @@ export default function TemplatesPage() {
               {/* Education */}
               <Section title="Education" open={openSections.education} onToggle={() => toggle("education")} badge={data.education.length}>
                 {data.education.map((edu, idx) => (
-                  <div key={edu.id} className="border border-white/8 rounded-xl p-3 space-y-2.5">
+                  <div key={edu.id} className="border border-white/[0.06] rounded-xl p-3 space-y-2.5">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[11px] text-slate-400 font-semibold">Degree {idx + 1}</span>
                       {data.education.length > 1 && (
@@ -340,7 +486,7 @@ export default function TemplatesPage() {
                     </div>
                   </div>
                 ))}
-                <button onClick={addEdu} className="flex items-center gap-1.5 text-cyan-400 text-xs hover:text-cyan-300 transition-colors">
+                <button onClick={addEdu} className="flex items-center gap-1.5 text-indigo-400 text-xs hover:text-cyan-300 transition-colors">
                   <Plus className="w-3.5 h-3.5" /> Add Another Degree
                 </button>
               </Section>
@@ -348,7 +494,7 @@ export default function TemplatesPage() {
               {/* Skills */}
               <Section title="Skills" open={openSections.skills} onToggle={() => toggle("skills")} badge={data.skills.length}>
                 {data.skills.map((sg, idx) => (
-                  <div key={sg.id} className="border border-white/8 rounded-xl p-3 space-y-2">
+                  <div key={sg.id} className="border border-white/[0.06] rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-slate-400 font-semibold">Category {idx + 1}</span>
                       {data.skills.length > 1 && (
@@ -361,7 +507,7 @@ export default function TemplatesPage() {
                     </div>
                   </div>
                 ))}
-                <button onClick={addSkill} className="flex items-center gap-1.5 text-cyan-400 text-xs hover:text-cyan-300 transition-colors">
+                <button onClick={addSkill} className="flex items-center gap-1.5 text-indigo-400 text-xs hover:text-cyan-300 transition-colors">
                   <Plus className="w-3.5 h-3.5" /> Add Skill Category
                 </button>
               </Section>
@@ -369,7 +515,7 @@ export default function TemplatesPage() {
               {/* Projects */}
               <Section title="Projects (optional)" open={openSections.projects} onToggle={() => toggle("projects")} badge={data.projects.length}>
                 {data.projects.map((proj, idx) => (
-                  <div key={proj.id} className="border border-white/8 rounded-xl p-3 space-y-2">
+                  <div key={proj.id} className="border border-white/[0.06] rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[11px] text-slate-400 font-semibold">Project {idx + 1}</span>
                       <button onClick={() => removeProject(proj.id)} className="text-red-400/60 hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -380,7 +526,7 @@ export default function TemplatesPage() {
                     <TextArea label="Description" value={proj.description} onChange={v => updateProject(proj.id, "description", v)} placeholder="Describe impact and what you built" rows={2} />
                   </div>
                 ))}
-                <button onClick={addProject} className="flex items-center gap-1.5 text-cyan-400 text-xs hover:text-cyan-300 transition-colors">
+                <button onClick={addProject} className="flex items-center gap-1.5 text-indigo-400 text-xs hover:text-cyan-300 transition-colors">
                   <Plus className="w-3.5 h-3.5" /> Add Project
                 </button>
                 {data.projects.length === 0 && (
@@ -391,7 +537,7 @@ export default function TemplatesPage() {
               {/* Certifications */}
               <Section title="Certifications (optional)" open={openSections.certifications} onToggle={() => toggle("certifications")} badge={data.certifications.length}>
                 {data.certifications.map((cert, idx) => (
-                  <div key={cert.id} className="border border-white/8 rounded-xl p-3 space-y-2">
+                  <div key={cert.id} className="border border-white/[0.06] rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[11px] text-slate-400 font-semibold">Certification {idx + 1}</span>
                       <button onClick={() => removeCert(cert.id)} className="text-red-400/60 hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -403,7 +549,7 @@ export default function TemplatesPage() {
                     </div>
                   </div>
                 ))}
-                <button onClick={addCert} className="flex items-center gap-1.5 text-cyan-400 text-xs hover:text-cyan-300 transition-colors">
+                <button onClick={addCert} className="flex items-center gap-1.5 text-indigo-400 text-xs hover:text-cyan-300 transition-colors">
                   <Plus className="w-3.5 h-3.5" /> Add Certification
                 </button>
               </Section>
@@ -412,15 +558,15 @@ export default function TemplatesPage() {
               <div className="pt-3 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleDownload}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-opacity shadow-lg shadow-indigo-500/20"
                 >
                   <Download className="w-4 h-4" /> Download as PDF
                 </button>
                 <Link
                   href="/analyze"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-white/12 text-slate-300 text-sm hover:border-cyan-500/30 hover:text-white transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-white/12 text-slate-300 text-sm hover:border-indigo-500/30 hover:text-white transition-colors"
                 >
-                  <Zap className="w-4 h-4 text-cyan-400" /> Check ATS Score
+                  <Zap className="w-4 h-4 text-indigo-400" /> Check ATS Score
                 </Link>
               </div>
               <p className="text-[10px] text-slate-600 text-center pb-4">Browser will open print dialog. Select &quot;Save as PDF&quot; to download.</p>
@@ -435,10 +581,10 @@ export default function TemplatesPage() {
                 </div>
                 <div
                   ref={previewWrapRef}
-                  className="w-full overflow-hidden rounded-xl border border-white/8 bg-white shadow-2xl shadow-black/40"
-                  style={{ height: Math.round(1123 * previewScale) }}
+                  className="w-full overflow-y-auto overflow-x-hidden rounded-xl border border-white/[0.06] bg-white shadow-2xl shadow-black/40 scrollbar-none"
+                  style={{ maxHeight: "80vh" }}
                 >
-                  <div style={{ transform: `scale(${previewScale})`, transformOrigin: "top left", width: 794 }}>
+                  <div style={{ zoom: previewScale, width: 794 }}>
                     <TemplateComponent data={data} />
                   </div>
                 </div>
@@ -455,14 +601,14 @@ export default function TemplatesPage() {
               <button onClick={() => setShowMobilePreview(false)} className="text-slate-400 hover:text-white text-sm">✕ Close</button>
             </div>
             <div className="flex-1 overflow-auto p-4" onClick={e => e.stopPropagation()}>
-              <div className="overflow-hidden rounded-lg border border-white/8 bg-white" style={{ width: "100%", height: `${Math.round(1123 * 0.45)}px` }}>
-                <div style={{ transform: "scale(0.45)", transformOrigin: "top left", width: 794 }}>
+              <div className="overflow-auto rounded-lg border border-white/[0.06] bg-white" style={{ width: "100%", maxHeight: "75vh" }}>
+                <div style={{ zoom: 0.45, width: 794 }}>
                   <TemplateComponent data={data} />
                 </div>
               </div>
             </div>
             <div className="px-4 py-3 bg-[#060f23] border-t border-white/5">
-              <button onClick={handleDownload} className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-semibold text-sm">
+              <button onClick={handleDownload} className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold text-sm">
                 Download PDF
               </button>
             </div>

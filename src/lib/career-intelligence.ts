@@ -81,9 +81,10 @@ function detectStack(resumeLower: string): DetectedTech[] {
 
 function detectExperienceLevel(resumeText: string, resumeLower: string): ExperienceLevel {
   // Title signals
-  if (/\b(principal|distinguished|fellow|vp of engineering|chief (architect|engineer))\b/i.test(resumeText)) return "principal";
-  if (/\b(staff (engineer|developer)|engineering manager|director of|head of engineering|tech lead|technical lead|lead (developer|engineer|architect))\b/i.test(resumeText)) return "lead";
-  if (/\b(senior|sr\.)\s+(software|full[- ]?stack|frontend|backend|data|platform|devops)\b/i.test(resumeText)) return "senior";
+  if (/\b(principal|distinguished|fellow|vp of engineering|chief (architect|engineer)|chief medical officer|chief nursing officer|cno|cmo|partner|managing partner|named partner|cfo|chief financial officer|treasurer|superintendent|chancellor|provost|vp of operations|chief operating officer|coo|chro|chief people officer|executive director)\b/i.test(resumeText)) return "principal";
+  if (/\b(staff (engineer|developer)|engineering manager|director of|head of engineering|tech lead|technical lead|lead (developer|engineer|architect)|nurse manager|charge nurse|nurse supervisor|clinical director|senior counsel|general counsel|managing attorney|controller|finance director|audit manager|tax director|department chair|dean|academic director|plant manager|operations director|supply chain director|hr director|vp of people|talent director|general contractor|site supervisor|construction manager|executive chef|hotel manager|f&b director)\b/i.test(resumeText)) return "lead";
+  if (/\b(senior|sr\.)\s+(software|full[- ]?stack|frontend|backend|data|platform|devops|nurse|accountant|analyst|auditor|teacher|operations|recruiter)\b/i.test(resumeText)) return "senior";
+  if (/\b(nurse practitioner|clinical specialist|senior associate|counsel|department head|lead teacher|production manager|quality manager|hr manager|hr business partner|master electrician|foreman|lead technician)\b/i.test(resumeText)) return "senior";
   if (/\b(intern(ship)?|co[-\s]?op|student developer|graduate trainee)\b/i.test(resumeText)) return "intern";
 
   // Year-based heuristics
@@ -523,6 +524,250 @@ function buildCareerPath(
         "Publish a personal app to App Store or Play Store and include the download stats",
         "Profile and fix a performance issue in an app — document the before/after metrics",
         "Learn React Native and build the same app cross-platform to expand your market",
+      ],
+    };
+  }
+
+  // ─── Healthcare paths ──────────────────────────────────────────────────────────
+  if (role === "healthcare") {
+    return {
+      nextSkills: [
+        { skill: "Advanced Certifications (ACLS, PALS, CCRN)", priority: "must_learn", reason: "Required for career advancement and specialized units" , timeframe: "3-6 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Leadership & Charge Nurse Skills", priority: "high", reason: "Required to move into management" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "EHR/EMR Proficiency (Epic, Cerner)", priority: "high", reason: "Standard across all healthcare facilities" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Evidence-Based Practice", priority: "medium", reason: "Critical for clinical decision-making" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+        { skill: "Quality Improvement (Lean Healthcare)", priority: "medium", reason: "Valued for operational roles" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+      ],
+      targetRoles: [
+        { title: "Nurse Manager", readiness: "stretch", gap: "Need leadership experience and certifications" },
+        { title: "Clinical Specialist", readiness: "ready", gap: "Clinical expertise qualifies you" },
+        { title: "Nurse Educator", readiness: "stretch", gap: "Teaching experience needed" },
+      ],
+      resumeAdditions: [
+        { item: "Certifications and licenses with expiration dates", category: "certification", whyItMatters: "Healthcare hiring requires verified credentials — missing certs are disqualifying" },
+        { item: "Patient outcomes and quality metrics (e.g., 'reduced fall rate by 30%')", category: "metric", whyItMatters: "Quantified clinical impact differentiates experienced clinicians" },
+        { item: "Unit/department and patient volume (e.g., '40-bed ICU, 1:2 ratio')", category: "metric", whyItMatters: "Shows acuity level and scope of clinical experience" },
+      ],
+      levelUpGoals: [
+        "Obtain next-level certification relevant to your specialty (CCRN, CEN, etc.)",
+        "Take on charge nurse shifts and document leadership experience on your resume",
+        "Participate in a quality improvement project and quantify the outcomes",
+      ],
+    };
+  }
+
+  // ─── Finance paths ────────────────────────────────────────────────────────────
+  if (role === "finance") {
+    return {
+      nextSkills: [
+        { skill: "CPA Certification", priority: "must_learn", reason: "Required for advancement in public accounting" , timeframe: "3-6 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Financial Modeling & Valuation", priority: "high", reason: "Essential for analyst and management roles" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "ERP Systems (SAP, Oracle, NetSuite)", priority: "high", reason: "Required by most enterprise companies" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Data Analytics (Excel Advanced, Power BI, Tableau)", priority: "medium", reason: "Increasingly required for finance roles" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+        { skill: "Risk & Compliance Management", priority: "medium", reason: "Growing regulatory requirements" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+      ],
+      targetRoles: [
+        { title: "Finance Manager", readiness: "stretch" },
+        { title: "Controller", readiness: "future" },
+        { title: "Financial Analyst", readiness: "ready" },
+      ],
+      resumeAdditions: [
+        { item: "Budget size managed (e.g., 'managed $15M operating budget')", category: "metric", whyItMatters: "Finance roles are measured by the scale of money you handle" },
+        { item: "CPA, CFA, or CMA certification status", category: "certification", whyItMatters: "Professional certifications are table-stakes for finance advancement" },
+        { item: "Cost savings or revenue impact (e.g., 'identified $500K in annual savings')", category: "metric", whyItMatters: "Quantified financial impact is the strongest resume differentiator" },
+      ],
+      levelUpGoals: [
+        "Pursue CPA or CFA certification and add progress to your resume",
+        "Build advanced Excel models or learn Power BI to automate reporting",
+        "Document a cost-saving or process improvement initiative with quantified results",
+      ],
+    };
+  }
+
+  // ─── Legal paths ──────────────────────────────────────────────────────────────
+  if (role === "legal") {
+    return {
+      nextSkills: [
+        { skill: "Specialized Practice Area (IP, M&A, Tax)", priority: "must_learn" , reason: "Important for career advancement", timeframe: "3-6 months", resourceHint: "Professional development resources" },
+        { skill: "Business Development & Client Management", priority: "high" , reason: "Important for career advancement", timeframe: "1-3 months", resourceHint: "Professional development resources" },
+        { skill: "Legal Technology (e-Discovery, AI tools)", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+        { skill: "Leadership & Team Management", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+      ],
+      targetRoles: [
+        { title: "Senior Associate", readiness: "ready" },
+        { title: "Partner / Of Counsel", readiness: "stretch" },
+        { title: "General Counsel (In-house)", readiness: "stretch" },
+      ],
+      resumeAdditions: [
+        { item: "Case outcomes and deal values (e.g., 'closed $50M M&A transaction')", category: "metric", whyItMatters: "Legal hiring values the stakes and complexity of matters handled" },
+        { item: "Bar admissions and specialized certifications", category: "certification", whyItMatters: "Jurisdictional qualifications are required for legal practice" },
+        { item: "Practice areas and industry specializations", category: "skill", whyItMatters: "Legal recruiting is highly specialized — vague descriptions lose interviews" },
+      ],
+      levelUpGoals: [
+        "Deepen specialization in a high-demand practice area and highlight it on your resume",
+        "Develop client relationships and document business development contributions",
+        "Learn legal tech tools (e-Discovery, contract AI) to differentiate from peers",
+      ],
+    };
+  }
+
+  // ─── Education paths ──────────────────────────────────────────────────────────
+  if (role === "education") {
+    return {
+      nextSkills: [
+        { skill: "Advanced Degree (M.Ed, Ed.D)", priority: "must_learn" , reason: "Important for career advancement", timeframe: "3-6 months", resourceHint: "Professional development resources" },
+        { skill: "Curriculum Design & Assessment", priority: "high" , reason: "Important for career advancement", timeframe: "1-3 months", resourceHint: "Professional development resources" },
+        { skill: "EdTech Integration (LMS, Digital Tools)", priority: "high" , reason: "Important for career advancement", timeframe: "1-3 months", resourceHint: "Professional development resources" },
+        { skill: "Data-Driven Instruction", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+        { skill: "Special Education Certification", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+      ],
+      targetRoles: [
+        { title: "Department Head", readiness: "ready" },
+        { title: "Curriculum Coordinator", readiness: "stretch" },
+        { title: "School Administrator", readiness: "future" },
+      ],
+      resumeAdditions: [
+        { item: "Student outcome metrics (test scores, graduation rates, growth percentiles)", category: "metric", whyItMatters: "Data-driven results are increasingly required in education hiring" },
+        { item: "Certifications and endorsements by subject/grade", category: "certification", whyItMatters: "Teaching credentials are mandatory — missing them is disqualifying" },
+        { item: "Programs developed or led (e.g., 'created STEM curriculum for 300+ students')", category: "project", whyItMatters: "Shows initiative and scope beyond classroom instruction" },
+      ],
+      levelUpGoals: [
+        "Pursue an advanced degree or administrative certification",
+        "Lead a curriculum initiative and document measurable student outcomes",
+        "Integrate technology into instruction and present results to colleagues",
+      ],
+    };
+  }
+
+  // ─── Operations paths ─────────────────────────────────────────────────────────
+  if (role === "operations") {
+    return {
+      nextSkills: [
+        { skill: "Lean Six Sigma Certification", priority: "must_learn" , reason: "Important for career advancement", timeframe: "3-6 months", resourceHint: "Professional development resources" },
+        { skill: "ERP Systems (SAP, Oracle)", priority: "high" , reason: "Important for career advancement", timeframe: "1-3 months", resourceHint: "Professional development resources" },
+        { skill: "Supply Chain Optimization", priority: "high" , reason: "Important for career advancement", timeframe: "1-3 months", resourceHint: "Professional development resources" },
+        { skill: "Data Analytics for Operations", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+        { skill: "Project Management (PMP)", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+      ],
+      targetRoles: [
+        { title: "Operations Manager", readiness: "ready" },
+        { title: "Plant Manager", readiness: "stretch" },
+        { title: "VP of Operations", readiness: "future" },
+      ],
+      resumeAdditions: [
+        { item: "Efficiency improvements (e.g., 'reduced cycle time by 25%')", category: "metric", whyItMatters: "Operations roles are evaluated on measurable process improvements" },
+        { item: "Team and facility size managed (headcount, sq footage, output volume)", category: "metric", whyItMatters: "Shows the scope and complexity of your operational responsibility" },
+        { item: "Certifications (Six Sigma, PMP, APICS)", category: "certification", whyItMatters: "Operations certifications validate methodology expertise" },
+      ],
+      levelUpGoals: [
+        "Obtain Lean Six Sigma Green Belt or PMP certification",
+        "Lead a process improvement project and quantify the cost or time savings",
+        "Learn ERP systems or data analytics tools to improve operational visibility",
+      ],
+    };
+  }
+
+  // ─── HR paths ─────────────────────────────────────────────────────────────────
+  if (role === "hr") {
+    return {
+      nextSkills: [
+        { skill: "SHRM-CP/SCP or PHR/SPHR Certification", priority: "must_learn" , reason: "Important for career advancement", timeframe: "3-6 months", resourceHint: "Professional development resources" },
+        { skill: "People Analytics & HRIS (Workday, BambooHR)", priority: "high" , reason: "Important for career advancement", timeframe: "1-3 months", resourceHint: "Professional development resources" },
+        { skill: "Compensation & Benefits Strategy", priority: "high" , reason: "Important for career advancement", timeframe: "1-3 months", resourceHint: "Professional development resources" },
+        { skill: "DEI Program Development", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+        { skill: "Change Management", priority: "medium" , reason: "Important for career advancement", timeframe: "ongoing", resourceHint: "Professional development resources" },
+      ],
+      targetRoles: [
+        { title: "HR Manager", readiness: "ready" },
+        { title: "HR Business Partner", readiness: "stretch" },
+        { title: "Director of People", readiness: "future" },
+      ],
+      resumeAdditions: [
+        { item: "Employee count and org size supported (e.g., 'HRBP for 500-person division')", category: "metric", whyItMatters: "HR scope is measured by the population you serve" },
+        { item: "HR certifications (SHRM-CP, PHR, etc.)", category: "certification", whyItMatters: "HR certifications are increasingly required for mid-level+ roles" },
+        { item: "Program outcomes (retention rate improvements, time-to-fill, engagement scores)", category: "metric", whyItMatters: "Quantified HR impact shows strategic value beyond administrative work" },
+      ],
+      levelUpGoals: [
+        "Obtain SHRM-CP/SCP or PHR/SPHR certification",
+        "Implement a people analytics initiative and document measurable outcomes",
+        "Lead a company-wide HR program (onboarding, engagement, DEI) and quantify results",
+      ],
+    };
+  }
+
+  // ─── Trades / Hospitality / Government / Creative Media paths ─────────────────
+  if (role === "trades" || role === "hospitality" || role === "government" || role === "creative_media") {
+    const roleLabel = role === "trades" ? "Trades & Construction"
+      : role === "hospitality" ? "Hospitality & Food Service"
+      : role === "government" ? "Government & Public Sector"
+      : "Creative & Media";
+
+    const roleSkills: Record<string, SkillSuggestion[]> = {
+      trades: [
+        { skill: "OSHA Safety Certifications", priority: "must_learn", reason: "Required on virtually every job site" , timeframe: "3-6 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Blueprint Reading & Estimating", priority: "high", reason: "Essential for advancement to foreman or contractor" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Project Management (scheduling, budgeting)", priority: "high", reason: "Required to move from field work to management" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Specialized Licensing (Master Electrician, Master Plumber)", priority: "medium", reason: "Licenses command higher pay and open contractor opportunities" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+        { skill: "Technology (BIM, CAD, project management software)", priority: "medium", reason: "Modern construction increasingly requires digital skills" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+      ],
+      hospitality: [
+        { skill: "Food Safety Certification (ServSafe)", priority: "must_learn", reason: "Required for management roles in food service" , timeframe: "3-6 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Revenue Management & Yield Optimization", priority: "high", reason: "Critical for hotel and restaurant management advancement" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Hospitality Management Software (Opera, Toast, Aloha)", priority: "high", reason: "Industry-standard tools expected at management level" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Customer Experience & Service Excellence", priority: "medium", reason: "Differentiates candidates for leadership roles" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+        { skill: "Financial Management (P&L, food cost, labor cost)", priority: "medium", reason: "Required for GM and director-level positions" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+      ],
+      government: [
+        { skill: "Policy Analysis & Research", priority: "must_learn", reason: "Core competency for government advancement" , timeframe: "3-6 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Grant Writing & Budget Management", priority: "high", reason: "Funding expertise is highly valued in public sector" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Public Administration (MPA) or relevant advanced degree", priority: "high", reason: "Advanced degrees accelerate government career progression" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Data Analysis & Reporting", priority: "medium", reason: "Evidence-based decision-making is increasingly expected" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+        { skill: "Stakeholder Engagement & Public Communication", priority: "medium", reason: "Required for senior government roles" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+      ],
+      creative_media: [
+        { skill: "Portfolio Development (online presence)", priority: "must_learn", reason: "Creative roles are evaluated almost entirely on portfolio quality" , timeframe: "3-6 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Industry-Standard Software (Adobe Suite, DaVinci, Final Cut)", priority: "high", reason: "Tool proficiency is a baseline requirement" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "Content Strategy & Brand Development", priority: "high", reason: "Strategic thinking differentiates senior creative roles" , timeframe: "1-3 months", resourceHint: "Industry certifications and online courses" },
+        { skill: "AI Tools for Creative Work (Midjourney, Runway, ChatGPT)", priority: "medium", reason: "AI-augmented creatives are increasingly in demand" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+        { skill: "Client Management & Creative Direction", priority: "medium", reason: "Required for leadership and freelance success" , timeframe: "ongoing", resourceHint: "Industry certifications and online courses" },
+      ],
+    };
+
+    const roleTargets: Record<string, Array<{ title: string; readiness: "ready" | "stretch" | "future" }>> = {
+      trades: [
+        { title: "Foreman / Lead", readiness: "ready" },
+        { title: "General Contractor", readiness: "stretch" },
+        { title: "Project Manager (Construction)", readiness: "future" },
+      ],
+      hospitality: [
+        { title: "Restaurant / Hotel Manager", readiness: "ready" },
+        { title: "General Manager", readiness: "stretch" },
+        { title: "Regional Director", readiness: "future" },
+      ],
+      government: [
+        { title: "Program Manager", readiness: "ready" },
+        { title: "Department Director", readiness: "stretch" },
+        { title: "Agency Head / Commissioner", readiness: "future" },
+      ],
+      creative_media: [
+        { title: "Senior Designer / Editor", readiness: "ready" },
+        { title: "Creative Director", readiness: "stretch" },
+        { title: "Head of Creative / VP Creative", readiness: "future" },
+      ],
+    };
+
+    return {
+      nextSkills: roleSkills[role] ?? [],
+      targetRoles: roleTargets[role] ?? [],
+      resumeAdditions: [
+        { item: "Certifications and licenses relevant to your field", category: "certification", whyItMatters: `${roleLabel} roles require verified credentials` },
+        { item: "Quantified achievements (revenue, cost savings, project scale)", category: "metric", whyItMatters: "Numbers make any resume stand out regardless of industry" },
+        { item: "Tools and systems you are proficient in", category: "skill", whyItMatters: "ATS systems scan for specific tool and software names" },
+      ],
+      levelUpGoals: [
+        `Obtain the next certification or license relevant to your ${roleLabel.toLowerCase()} career`,
+        "Quantify every achievement on your resume with numbers, percentages, or dollar amounts",
+        "Take on a leadership or mentoring responsibility and add it to your experience section",
       ],
     };
   }

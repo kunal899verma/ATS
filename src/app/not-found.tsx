@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-[#020817]">
+    <main className="min-h-screen bg-[var(--bg-primary)]">
       <Navbar />
       <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none" />
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
         {/* Icon */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-white/8 flex items-center justify-center mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-white/[0.06] flex items-center justify-center mb-6">
           <Zap className="w-7 h-7 text-cyan-400" />
         </div>
 

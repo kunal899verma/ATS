@@ -111,6 +111,16 @@ const INDUSTRY_WEIGHTS: Record<RoleType, WeightProfile> = {
   sales:          { keywords: 0.15, skills: 0.10, experience: 0.35, education: 0.10, formatting: 0.20, atsCompatibility: 0.10 },
   product:        { keywords: 0.20, skills: 0.15, experience: 0.30, education: 0.10, formatting: 0.15, atsCompatibility: 0.10 },
   general:        { keywords: 0.25, skills: 0.20, experience: 0.20, education: 0.15, formatting: 0.10, atsCompatibility: 0.10 },
+  healthcare:     { keywords: 0.20, skills: 0.25, experience: 0.30, education: 0.10, formatting: 0.08, atsCompatibility: 0.07 },
+  finance:        { keywords: 0.18, skills: 0.20, experience: 0.28, education: 0.18, formatting: 0.08, atsCompatibility: 0.08 },
+  legal:          { keywords: 0.15, skills: 0.15, experience: 0.35, education: 0.20, formatting: 0.08, atsCompatibility: 0.07 },
+  education:      { keywords: 0.15, skills: 0.20, experience: 0.30, education: 0.22, formatting: 0.07, atsCompatibility: 0.06 },
+  operations:     { keywords: 0.22, skills: 0.22, experience: 0.28, education: 0.12, formatting: 0.08, atsCompatibility: 0.08 },
+  hr:             { keywords: 0.20, skills: 0.22, experience: 0.28, education: 0.14, formatting: 0.08, atsCompatibility: 0.08 },
+  trades:         { keywords: 0.18, skills: 0.28, experience: 0.30, education: 0.08, formatting: 0.08, atsCompatibility: 0.08 },
+  hospitality:    { keywords: 0.18, skills: 0.22, experience: 0.32, education: 0.10, formatting: 0.10, atsCompatibility: 0.08 },
+  government:     { keywords: 0.20, skills: 0.18, experience: 0.28, education: 0.18, formatting: 0.08, atsCompatibility: 0.08 },
+  creative_media: { keywords: 0.20, skills: 0.25, experience: 0.28, education: 0.10, formatting: 0.09, atsCompatibility: 0.08 },
 };
 
 const ROLE_SIGNALS: Record<string, string[]> = {
@@ -168,6 +178,16 @@ const ROLE_SIGNALS: Record<string, string[]> = {
     "product owner", "jira", "agile", "scrum", "kanban",
     "feature prioritization", "market research", "product launch",
   ],
+  healthcare: ["nursing", "patient care", "rn", "registered nurse", "clinical", "hospital", "ehr", "emr", "hipaa", "triage", "vital signs", "medication", "cpr", "bls", "acls", "infection control", "patient education", "wound care", "telemetry", "pharmacy", "radiology", "physical therapy", "occupational therapy", "medical"],
+  finance: ["accounting", "cpa", "gaap", "financial reporting", "audit", "tax", "bookkeeping", "reconciliation", "budgeting", "payroll", "financial analysis", "quickbooks", "sap", "bloomberg", "risk management", "investment", "portfolio", "banking", "insurance", "actuarial"],
+  legal: ["legal research", "litigation", "contract", "compliance", "discovery", "intellectual property", "corporate law", "westlaw", "lexisnexis", "paralegal", "bar exam", "attorney", "lawyer", "law firm", "due diligence", "regulatory", "court"],
+  education: ["curriculum", "pedagogy", "assessment", "lesson planning", "special education", "classroom management", "lms", "accreditation", "teaching", "instruction", "student", "k-12", "higher education", "tutoring", "academic"],
+  operations: ["lean", "six sigma", "supply chain", "inventory", "quality assurance", "continuous improvement", "erp", "procurement", "kpi", "manufacturing", "production", "logistics", "warehouse", "distribution", "process improvement"],
+  hr: ["recruitment", "onboarding", "performance management", "employee relations", "compensation", "hris", "training", "diversity", "organizational development", "talent acquisition", "benefits", "labor relations", "workforce planning", "succession planning"],
+  trades: ["osha", "blueprint", "hvac", "electrical", "plumbing", "welding", "construction", "carpentry", "masonry", "roofing", "concrete", "excavation", "safety", "building code", "inspection"],
+  hospitality: ["guest services", "food safety", "servsafe", "pos", "hospitality management", "event planning", "housekeeping", "front desk", "concierge", "restaurant", "hotel", "catering", "banquet", "tourism"],
+  government: ["public policy", "grant writing", "public administration", "legislative", "security clearance", "civil service", "federal", "municipal", "regulatory", "compliance", "public sector", "government agency"],
+  creative_media: ["content creation", "copywriting", "journalism", "broadcasting", "video production", "photography", "podcast", "social media", "editorial", "publishing", "scriptwriting", "creative writing", "multimedia", "graphic design", "animation"],
 };
 
 const ROLE_BASE_KEYWORDS: Partial<Record<RoleType, string[]>> = {
@@ -182,6 +202,16 @@ const ROLE_BASE_KEYWORDS: Partial<Record<RoleType, string[]>> = {
   sales:         ["crm", "pipeline management", "prospecting", "revenue", "quota", "business development", "negotiation", "salesforce"],
   product:       ["product roadmap", "user stories", "agile", "stakeholder management", "analytics", "okr", "prioritization", "go-to-market"],
   general:       ["communication", "project management", "leadership", "problem solving", "teamwork", "stakeholders", "documentation"],
+  healthcare: ["patient care", "clinical", "nursing", "hipaa", "ehr", "medical", "health", "treatment", "diagnosis", "documentation"],
+  finance: ["accounting", "financial", "audit", "tax", "reporting", "budgeting", "analysis", "reconciliation", "compliance", "gaap"],
+  legal: ["legal", "litigation", "compliance", "contract", "regulatory", "research", "court", "law", "attorney", "counsel"],
+  education: ["teaching", "curriculum", "assessment", "instruction", "student", "education", "learning", "classroom", "academic", "pedagogy"],
+  operations: ["operations", "manufacturing", "supply chain", "quality", "production", "logistics", "lean", "inventory", "process", "efficiency"],
+  hr: ["recruitment", "employee", "talent", "performance", "training", "benefits", "compensation", "onboarding", "culture", "workforce"],
+  trades: ["construction", "safety", "building", "maintenance", "installation", "repair", "inspection", "code", "technical", "equipment"],
+  hospitality: ["hospitality", "service", "guest", "hotel", "restaurant", "event", "food", "customer", "management", "operations"],
+  government: ["government", "policy", "public", "administration", "regulatory", "compliance", "federal", "program", "grants", "civic"],
+  creative_media: ["creative", "content", "writing", "media", "production", "design", "editorial", "publishing", "storytelling", "brand"],
 };
 
 // ─── Main Entry Point ─────────────────────────────────────────────────────────
@@ -285,6 +315,32 @@ const COMPOUND_TERMS = [
   "a/b testing", "unit testing", "integration testing", "end to end", "end-to-end",
   "code review", "pull request",
   "stakeholder management", "cross functional", "cross-functional",
+  // Healthcare
+  "patient care", "electronic health records", "infection control", "vital signs", "wound care",
+  "medication administration", "clinical assessment", "patient education", "nursing diagnosis",
+  // Finance
+  "financial reporting", "internal controls", "risk management", "financial analysis",
+  "accounts receivable", "accounts payable", "general ledger", "tax planning",
+  // Legal
+  "legal research", "contract review", "due diligence", "intellectual property",
+  "regulatory compliance", "dispute resolution", "corporate governance",
+  // Education
+  "curriculum development", "lesson planning", "special education", "classroom management",
+  "student assessment", "learning outcomes", "differentiated instruction",
+  // Operations
+  "supply chain", "quality assurance", "process improvement", "inventory management",
+  "continuous improvement", "lean manufacturing",
+  // HR
+  "talent acquisition", "performance management", "employee relations",
+  "organizational development", "workforce planning", "compensation and benefits",
+  // Hospitality
+  "guest services", "food safety", "event planning", "hotel management",
+  // Trades
+  "building code", "safety compliance", "project management",
+  // Government
+  "public policy", "grant writing", "public administration", "security clearance",
+  // Creative
+  "content creation", "video production", "creative writing",
 ];
 
 // ─── Keyword Extraction from JD ──────────────────────────────────────────────

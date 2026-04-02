@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/blog";
 import { ArrowRight, Clock, Zap, BookOpen } from "lucide-react";
+import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "ATS Resume Blog — Tips, Guides & Strategies | ResumeATS",
@@ -52,7 +53,7 @@ export default async function BlogIndexPage() {
       {posts[0] && (
         <Link
           href={`/blog/${posts[0].slug}`}
-          className="glass rounded-2xl border border-white/8 p-5 sm:p-7 mb-8 block hover:border-white/14 transition-all group"
+          className="glass-card border border-white/[0.06] p-5 sm:p-7 mb-8 block hover:border-white/14 transition-all group"
         >
           <div className="flex flex-col sm:flex-row sm:items-start gap-5">
             <div className="flex-1">
@@ -86,7 +87,7 @@ export default async function BlogIndexPage() {
           <Link
             key={post.slug}
             href={`/blog/${post.slug}`}
-            className="glass rounded-2xl border border-white/7 p-6 hover:border-white/13 transition-all group"
+            className="glass-card border border-white/7 p-6 hover:border-white/13 transition-all group"
           >
             <span className={`tag border text-xs mb-3 inline-flex ${CATEGORY_COLORS[post.category] ?? "text-slate-400 bg-white/5 border-white/10"}`}>
               {post.category}
@@ -111,7 +112,7 @@ export default async function BlogIndexPage() {
       </div>
 
       {/* CTA */}
-      <div className="mt-14 glass rounded-2xl border border-cyan-500/15 bg-cyan-500/3 p-7 text-center">
+      <div className="mt-14 glass-card border border-cyan-500/15 bg-cyan-500/3 p-7 text-center">
         <Zap className="w-6 h-6 text-cyan-400 mx-auto mb-3" />
         <h2 className="text-xl font-bold text-white mb-2">
           Ready to check your resume?
@@ -127,22 +128,7 @@ export default async function BlogIndexPage() {
         </Link>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 mt-14 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-gradient-to-br from-cyan-400 to-violet-600 flex items-center justify-center">
-            <Zap className="w-2.5 h-2.5 text-white" />
-          </div>
-          <span className="text-slate-400 text-sm font-medium">
-            Resume<span className="text-cyan-400">ATS</span>
-          </span>
-        </div>
-        <div className="flex gap-5 text-slate-600 text-xs">
-          <Link href="/analyze" className="hover:text-slate-400 transition-colors">Analyze Resume</Link>
-          <Link href="/tips" className="hover:text-slate-400 transition-colors">ATS Tips</Link>
-          <Link href="/pricing" className="hover:text-slate-400 transition-colors">Pricing</Link>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

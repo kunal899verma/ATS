@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/layout/Footer";
 import { ArrowRight, CheckCircle2, XCircle, Zap, AlertTriangle, Target, Brain } from "lucide-react";
 import type { Metadata } from "next";
 import { FadeIn } from "@/components/ui/FadeIn";
@@ -176,7 +177,7 @@ const faqJsonLd = {
 
 export default function TipsPage() {
   return (
-    <main className="min-h-screen bg-[#020817]">
+    <main className="min-h-screen bg-[var(--bg-primary)]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c") }}
@@ -206,7 +207,7 @@ export default function TipsPage() {
         </FadeIn>
 
         {/* Quick wins */}
-        <div className="glass rounded-2xl border border-emerald-500/15 bg-emerald-500/3 p-6 mb-12">
+        <div className="glass-card border border-emerald-500/15 bg-emerald-500/3 p-6 mb-12">
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-4 h-4 text-emerald-400" />
             <h2 className="text-white font-bold">Quick wins — do these first</h2>
@@ -240,7 +241,7 @@ export default function TipsPage() {
                   {section.items.map((tip, idx) => (
                     <StaggerItem key={idx}>
                       <GlowCard glow={section.color as "cyan" | "violet" | "pink"}>
-                        <div className={`glass rounded-2xl border ${section.border} p-6`}>
+                        <div className={`glass-card border ${section.border} p-6`}>
                           <h3 className="text-white font-semibold text-[15px] mb-2">{tip.title}</h3>
                           <p className="text-slate-400 text-sm leading-relaxed mb-4">{tip.desc}</p>
 
@@ -277,7 +278,7 @@ export default function TipsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {MYTHS.map((m) => (
                 <StaggerItem key={m.myth}>
-                  <div className="glass rounded-2xl border border-white/7 p-5">
+                  <div className="glass-card border border-white/7 p-5">
                     <div className="flex items-start gap-2 mb-2">
                       <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                       <p className="text-red-400 font-semibold text-sm">&quot;{m.myth}&quot;</p>
@@ -292,7 +293,7 @@ export default function TipsPage() {
 
         {/* CTA */}
         <FadeIn direction="up">
-          <div className="glass rounded-2xl border border-cyan-500/20 bg-cyan-500/3 p-8 text-center">
+          <div className="glass-card border border-cyan-500/20 bg-cyan-500/3 p-8 text-center">
             <h2 className="text-2xl font-bold text-white mb-3">Put these tips to the test</h2>
             <p className="text-slate-400 mb-7 max-w-md mx-auto">
               Apply one tip, re-analyze your resume, and see your score move. Free, no account required.
@@ -308,22 +309,7 @@ export default function TipsPage() {
         </FadeIn>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-cyan-400 to-violet-600 flex items-center justify-center">
-              <Zap className="w-3 h-3 text-white" />
-            </div>
-            <span className="text-slate-400 text-sm font-medium">Resume<span className="text-cyan-400">ATS</span></span>
-          </div>
-          <p className="text-slate-600 text-xs text-center">Free ATS resume checker. Your data is never stored.</p>
-          <div className="flex gap-6 text-slate-600 text-xs">
-            <Link href="/analyze" className="hover:text-slate-400 transition-colors">Analyze Resume</Link>
-            <Link href="/pricing" className="hover:text-slate-400 transition-colors">Pricing</Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }
