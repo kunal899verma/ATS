@@ -136,7 +136,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.98 }}
                     transition={{ duration: 0.16 }}
-                    className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e18]/95 p-1.5 shadow-2xl backdrop-blur-xl"
+                    className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e18]/95 p-1.5 shadow-2xl backdrop-blur-xl z-[60]"
                   >
                     {RESOURCE_LINKS.map((link) => {
                       const Icon = link.icon;
@@ -209,7 +209,7 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-52 glass-card p-1 shadow-xl"
+                      className="absolute right-0 top-full mt-2 w-52 glass-card p-1 shadow-xl z-[60]"
                       role="menu"
                     >
                       <div className="px-3 py-2 border-b border-white/5 mb-1">
