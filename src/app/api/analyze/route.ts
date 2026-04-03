@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeResume } from "@/lib/ats-analyzer";
 import { auth } from "@/auth";
-import { trackAnalysis } from "@/lib/user-store";
+import { trackAnalysis, trackAnonymousAnalysis, extractContactFromResume } from "@/lib/user-store";
+import {
+  getGeoDetails,
+  parseUserAgent,
+  createVisitorId,
+  VISITOR_COOKIE_NAME,
+} from "@/lib/visitor-analytics";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -175,16 +181,41 @@ export async function POST(req: NextRequest) {
     // Run analysis
     const result = analyzeResume(cleanResume, cleanJD);
 
-    // Track analysis for signed-in users
     const session = await auth();
+    const analyzedAt = new Date().toISOString();
+
     if (session?.user?.email) {
+      // Track analysis for signed-in users
       await trackAnalysis({
         email: session.user.email,
         score: result.overallScore,
         grade: result.grade,
         detectedRole: result.detectedRole ?? "unknown",
         inputMode: pastedText ? "paste" : "file",
-        analyzedAt: new Date().toISOString(),
+        analyzedAt,
+      });
+    } else {
+      // Track analysis for anonymous users — extract contact info from resume
+      const { name, email, phone } = extractContactFromResume(cleanResume);
+      const visitorId = req.cookies.get(VISITOR_COOKIE_NAME)?.value ?? createVisitorId();
+      const geo = getGeoDetails(req.headers);
+      const ua = req.headers.get("user-agent");
+      const { browser, deviceType, os } = parseUserAgent(ua);
+
+      await trackAnonymousAnalysis({
+        visitorId,
+        score: result.overallScore,
+        grade: result.grade,
+        detectedRole: result.detectedRole ?? "unknown",
+        inputMode: pastedText ? "paste" : "file",
+        analyzedAt,
+        extractedName: name,
+        extractedEmail: email,
+        extractedPhone: phone,
+        ...geo,
+        browser,
+        deviceType,
+        os,
       });
     }
 

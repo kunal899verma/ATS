@@ -35,6 +35,7 @@ export interface AnalyticsEvent {
   timezone?: string;
   screenResolution?: string;
   signUpAt?: string;
+  isAnonymous?: boolean;
 }
 
 export interface AnalyticsSnapshot {
@@ -75,6 +76,25 @@ export interface AnalyticsSnapshot {
     screenResolution?: string;
     pagesVisited: string[];
   }>;
+  unregisteredUsers: Array<{
+    visitorId: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    analyses: number;
+    lastSeen: string;
+    firstSeen: string;
+    location: string;
+    lastDevice: string;
+    lastBrowser: string;
+    os: string[];
+    lastScore?: number;
+    lastGrade?: string;
+    lastRole?: string;
+    timezone?: string;
+    language?: string;
+    screenResolution?: string;
+  }>;
 }
 
 function createEmptySnapshot(configured = isAnalyticsStorageConfigured(), storageError?: string): AnalyticsSnapshot {
@@ -91,6 +111,7 @@ function createEmptySnapshot(configured = isAnalyticsStorageConfigured(), storag
     topPages: [],
     topLocations: [],
     recentUsers: [],
+    unregisteredUsers: [],
   };
 }
 
@@ -301,6 +322,7 @@ export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapsh
     const topPages = new Map<string, number>();
     const topLocations = new Map<string, number>();
     const users = new Map<string, AnalyticsSnapshot["recentUsers"][number]>();
+    const unregistered = new Map<string, AnalyticsSnapshot["unregisteredUsers"][number]>();
 
     let totalPageViews = 0;
     let analysesRun = 0;
@@ -322,7 +344,55 @@ export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapsh
       const location = formatLocation(event);
       topLocations.set(location, (topLocations.get(location) ?? 0) + 1);
 
-      if (event.userEmail) {
+      // Aggregate anonymous resume uploaders (non-logged-in users who uploaded a resume)
+      if (event.isAnonymous && event.type === "analysis") {
+        const key = event.visitorId;
+        const existing = unregistered.get(key);
+        if (existing) {
+          existing.analyses += 1;
+          existing.lastSeen = event.createdAt > existing.lastSeen ? event.createdAt : existing.lastSeen;
+          existing.firstSeen = event.createdAt < existing.firstSeen ? event.createdAt : existing.firstSeen;
+          if (!existing.name && event.userName) existing.name = event.userName;
+          if (!existing.email && event.userEmail) existing.email = event.userEmail;
+          if (!existing.phone && event.userPhone) existing.phone = event.userPhone;
+          const loc = formatLocation(event);
+          if (loc !== "Unknown") existing.location = loc;
+          const dev = formatDevice(event);
+          if (dev !== "Unknown") {
+            existing.lastDevice = dev;
+            existing.lastBrowser = event.browser || existing.lastBrowser;
+          }
+          if (event.os && !existing.os.includes(event.os)) existing.os.push(event.os);
+          existing.lastScore = event.score ?? existing.lastScore;
+          existing.lastGrade = event.grade ?? existing.lastGrade;
+          existing.lastRole = event.detectedRole ?? existing.lastRole;
+          existing.timezone = event.timezone ?? existing.timezone;
+          existing.language = event.language ?? existing.language;
+          existing.screenResolution = event.screenResolution ?? existing.screenResolution;
+        } else {
+          unregistered.set(key, {
+            visitorId: key,
+            name: event.userName,
+            email: event.userEmail,
+            phone: event.userPhone,
+            analyses: 1,
+            lastSeen: event.createdAt,
+            firstSeen: event.createdAt,
+            location: formatLocation(event),
+            lastDevice: formatDevice(event),
+            lastBrowser: event.browser || "Unknown",
+            os: event.os ? [event.os] : [],
+            lastScore: event.score,
+            lastGrade: event.grade,
+            lastRole: event.detectedRole,
+            timezone: event.timezone,
+            language: event.language,
+            screenResolution: event.screenResolution,
+          });
+        }
+      }
+
+      if (event.userEmail && !event.isAnonymous) {
         signedInUsers.add(event.userEmail);
         const existing = users.get(event.userEmail);
 
@@ -408,6 +478,7 @@ export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapsh
       topPages: takeTopEntries(topPages),
       topLocations: takeTopEntries(topLocations),
       recentUsers: [...users.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 12),
+      unregisteredUsers: [...unregistered.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 50),
     };
   } catch (error) {
     console.error("[ANALYTICS_SNAPSHOT_ERROR]", error);

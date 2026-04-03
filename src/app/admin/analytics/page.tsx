@@ -139,6 +139,140 @@ type UserEntry = {
   pagesVisited: string[];
 };
 
+type UnregisteredEntry = {
+  visitorId: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  analyses: number;
+  lastSeen: string;
+  firstSeen: string;
+  location: string;
+  lastDevice: string;
+  lastBrowser: string;
+  os: string[];
+  lastScore?: number;
+  lastGrade?: string;
+  lastRole?: string;
+  timezone?: string;
+  language?: string;
+  screenResolution?: string;
+};
+
+function UnregisteredUserCard({ user }: { user: UnregisteredEntry }) {
+  return (
+    <div className="glass-card border border-white/[0.06] rounded-2xl p-5 space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-xs font-bold text-white ring-1 ring-white/10 flex-shrink-0">
+          {user.name
+            ? user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+            : "?"}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-white leading-tight truncate">
+            {user.name ?? <span className="text-slate-500 italic">Name not found</span>}
+          </p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <Mail className="h-3 w-3 text-slate-500 flex-shrink-0" />
+            <p className="text-xs text-slate-400 truncate">{user.email ?? "—"}</p>
+          </div>
+        </div>
+        <span className="ml-auto rounded-full bg-slate-500/10 px-2 py-0.5 text-[10px] font-semibold text-slate-400 border border-slate-500/20 whitespace-nowrap">
+          Not signed in
+        </span>
+      </div>
+
+      {/* Contact + Timing */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+        <div className="flex items-center gap-1.5">
+          <Phone className="h-3 w-3 text-slate-500 flex-shrink-0" />
+          <span className={user.phone ? "text-slate-300" : "text-slate-600"}>
+            {user.phone ?? "—"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Activity className="h-3 w-3 text-slate-500 flex-shrink-0" />
+          <span className="text-slate-400">First seen {formatDate(user.firstSeen)}</span>
+        </div>
+        <div className="col-span-2 flex items-center gap-1.5">
+          <Activity className="h-3 w-3 text-cyan-500 flex-shrink-0" />
+          <span className="text-slate-400">Last seen {formatTimestamp(user.lastSeen)}</span>
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.05]" />
+
+      {/* Location + Tech */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-slate-600 font-medium">Location</p>
+          {user.location && user.location !== "Unknown" ? (
+            <div className="flex items-start gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <span className="text-slate-300 leading-snug">{user.location}</span>
+            </div>
+          ) : (
+            <span className="text-slate-600">—</span>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-slate-600 font-medium">Tech</p>
+          <div className="space-y-1">
+            {user.os.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Cpu className="h-3 w-3 text-indigo-400 flex-shrink-0" />
+                <span className="text-slate-300">{user.os.join(", ")}</span>
+              </div>
+            )}
+            {user.lastBrowser && user.lastBrowser !== "Unknown" && (
+              <div className="flex items-center gap-1.5">
+                <Monitor className="h-3 w-3 text-cyan-300 flex-shrink-0" />
+                <span className="text-slate-300">{user.lastBrowser}</span>
+              </div>
+            )}
+            {user.timezone && (
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3 w-3 text-slate-500 flex-shrink-0" />
+                <span className="text-slate-400 truncate">{user.timezone}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.05]" />
+
+      {/* Last analysis */}
+      <div className="space-y-1.5 text-xs">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-slate-600 font-medium">Last Analysis</p>
+        {user.lastScore !== undefined ? (
+          <div className="flex items-center gap-2">
+            <span className={`text-lg font-bold ${scoreColor(user.lastScore)}`}>{user.lastScore}</span>
+            {user.lastGrade && (
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${gradeBadgeClass(user.lastGrade)}`}>
+                {user.lastGrade}
+              </span>
+            )}
+            {user.lastRole && <span className="text-slate-400 truncate">{user.lastRole}</span>}
+          </div>
+        ) : (
+          <span className="text-slate-600">No analysis yet</span>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center gap-4 pt-1 text-xs border-t border-white/[0.05]">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-amber-400" />
+          <span className="text-slate-400">{user.analyses} {user.analyses === 1 ? "analysis" : "analyses"}</span>
+        </div>
+        <p className="ml-auto font-mono text-[10px] text-slate-700 truncate max-w-[140px]">{user.visitorId}</p>
+      </div>
+    </div>
+  );
+}
+
 function UserCard({ user }: { user: UserEntry }) {
   const displayedPages = user.pagesVisited.slice(0, 6);
   const extraPages = user.pagesVisited.length - displayedPages.length;
@@ -411,6 +545,34 @@ export default async function AdminAnalyticsPage() {
               <UserRound className="h-8 w-8 text-slate-600 mx-auto mb-3" />
               <p className="text-sm text-slate-500">No signed-in users yet.</p>
               <p className="mt-1 text-xs text-slate-600">Users will appear here after their first login.</p>
+            </div>
+          )}
+        </section>
+
+        {/* Unregistered Users — card grid */}
+        <section className="glass-card border border-white/[0.06] p-5">
+          <div className="mb-5 flex items-center gap-3">
+            <UserRound className="h-4 w-4 text-slate-400" />
+            <h2 className="text-lg font-semibold text-white">Unregistered Users</h2>
+            <span className="ml-auto rounded-full bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-400 border border-slate-500/20">
+              {snapshot.unregisteredUsers.length} users
+            </span>
+          </div>
+          <p className="mb-5 text-xs text-slate-500 leading-relaxed">
+            Users who ran a resume analysis without signing in. Name, email, and phone are extracted directly from their uploaded resume.
+          </p>
+
+          {snapshot.unregisteredUsers.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {snapshot.unregisteredUsers.map((user) => (
+                <UnregisteredUserCard key={user.visitorId} user={user} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-10 text-center">
+              <UserRound className="h-8 w-8 text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-500">No anonymous analyses yet.</p>
+              <p className="mt-1 text-xs text-slate-600">Users will appear here after they upload a resume without signing in.</p>
             </div>
           )}
         </section>
