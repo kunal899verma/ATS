@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Providers from "@/components/Providers";
 import { ToastProvider } from "@/components/ui/Toast";
+import { PageTracker } from "@/components/analytics/PageTracker";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </ToastProvider>
         </Providers>
+        <PageTracker />
         <Analytics />
         <SpeedInsights />
       </body>

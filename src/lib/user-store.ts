@@ -10,6 +10,7 @@ export interface UserRecord {
   name: string;
   email: string;
   image: string;
+  phone?: string;
   provider: string;
   signedUpAt: string;
 }
@@ -34,7 +35,10 @@ export async function saveUser(user: UserRecord): Promise<void> {
     visitorId: createVisitorId(),
     userEmail: user.email,
     userName: user.name,
+    userImage: user.image,
+    userPhone: user.phone,
     provider: user.provider,
+    signUpAt: user.signedUpAt,
   });
 
   // ── Example persistent storage adapters (optional) ────────────────────────

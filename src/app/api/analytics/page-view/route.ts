@@ -57,6 +57,8 @@ export async function POST(req: NextRequest) {
       userAgent: userAgent ?? undefined,
       userEmail: session?.user?.email ?? undefined,
       userName: session?.user?.name ?? undefined,
+      userImage: session?.user?.image ?? undefined,
+      userPhone: (session?.user as { phone?: string | null } | undefined)?.phone ?? undefined,
       provider: (session?.user as { provider?: string } | undefined)?.provider,
     })
   );

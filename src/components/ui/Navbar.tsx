@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { isAdminEmail } from "@/lib/visitor-analytics";
 import {
   Zap, Menu, X, LogOut, ChevronDown,
   FileSearch, FileText, MessageSquare, LayoutTemplate,
@@ -35,7 +34,7 @@ export default function Navbar() {
   const [resourcesOpen, setResourcesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { data: session, status } = useSession();
-  const isAdmin = isAdminEmail(session?.user?.email);
+  const isAdmin = Boolean((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const resourcesMenuRef = useRef<HTMLDivElement>(null);
 

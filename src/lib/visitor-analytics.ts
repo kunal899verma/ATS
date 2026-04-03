@@ -23,11 +23,18 @@ export interface AnalyticsEvent {
   userAgent?: string;
   userEmail?: string;
   userName?: string;
+  userImage?: string;
+  userPhone?: string;
   provider?: string;
   score?: number;
   grade?: string;
   detectedRole?: string;
   inputMode?: string;
+  os?: string;
+  language?: string;
+  timezone?: string;
+  screenResolution?: string;
+  signUpAt?: string;
 }
 
 export interface AnalyticsSnapshot {
@@ -44,11 +51,28 @@ export interface AnalyticsSnapshot {
   recentUsers: Array<{
     email: string;
     name: string;
+    image?: string;
+    phone?: string;
     visits: number;
     analyses: number;
+    signIns: number;
     lastSeen: string;
+    firstSeen: string;
+    signUpAt?: string;
     location: string;
+    lastDevice: string;
+    lastBrowser: string;
     providers: string[];
+    devices: string[];
+    browsers: string[];
+    lastScore?: number;
+    lastGrade?: string;
+    lastRole?: string;
+    os: string[];
+    timezone?: string;
+    language?: string;
+    screenResolution?: string;
+    pagesVisited: string[];
   }>;
 }
 
@@ -80,7 +104,7 @@ export function isAdminEmail(email?: string | null) {
     .map((value) => normalize(value))
     .filter(Boolean);
 
-  const allowList = new Set(["admin@test.com", ...configured]);
+  const allowList = new Set(configured);
   return allowList.has(normalize(email));
 }
 
@@ -138,7 +162,15 @@ export function parseUserAgent(userAgent?: string | null) {
           ? "desktop"
           : "unknown";
 
-  return { browser, deviceType: deviceType as AnalyticsEvent["deviceType"] };
+  const os = lower.includes("windows") ? "Windows"
+    : lower.includes("iphone") || lower.includes("ipad") ? "iOS"
+    : lower.includes("android") ? "Android"
+    : lower.includes("mac os x") || lower.includes("macos") ? "macOS"
+    : lower.includes("cros") || lower.includes("chromeos") ? "ChromeOS"
+    : lower.includes("linux") ? "Linux"
+    : "Unknown";
+
+  return { browser, deviceType: deviceType as AnalyticsEvent["deviceType"], os };
 }
 
 function buildEventPath(event: AnalyticsEvent) {
@@ -233,6 +265,10 @@ function formatLocation(event: AnalyticsEvent) {
   return [event.city, event.region, event.country].filter(Boolean).join(", ") || "Unknown";
 }
 
+function formatDevice(event: AnalyticsEvent) {
+  return [event.browser, event.deviceType].filter(Boolean).join(" · ") || "Unknown";
+}
+
 export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapshot> {
   const events = await getRecentAnalyticsEvents(limit);
 
@@ -269,20 +305,68 @@ export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapsh
       if (existing) {
         existing.visits += event.type === "page_view" ? 1 : 0;
         existing.analyses += event.type === "analysis" ? 1 : 0;
+        existing.signIns += event.type === "sign_in" ? 1 : 0;
         existing.lastSeen = event.createdAt > existing.lastSeen ? event.createdAt : existing.lastSeen;
+        existing.firstSeen = event.createdAt < existing.firstSeen ? event.createdAt : existing.firstSeen;
         existing.location = location !== "Unknown" ? location : existing.location;
+        existing.lastDevice = formatDevice(event) !== "Unknown" ? formatDevice(event) : existing.lastDevice;
+        existing.lastBrowser = event.browser || existing.lastBrowser;
+        existing.image = event.userImage || existing.image;
+        existing.phone = event.userPhone || existing.phone;
         if (event.provider && !existing.providers.includes(event.provider)) {
           existing.providers.push(event.provider);
+        }
+        if (event.deviceType && !existing.devices.includes(event.deviceType)) {
+          existing.devices.push(event.deviceType);
+        }
+        if (event.browser && !existing.browsers.includes(event.browser)) {
+          existing.browsers.push(event.browser);
+        }
+        if (event.type === "analysis") {
+          existing.lastScore = event.score ?? existing.lastScore;
+          existing.lastGrade = event.grade ?? existing.lastGrade;
+          existing.lastRole = event.detectedRole ?? existing.lastRole;
+        }
+        if (event.type === "sign_in" && event.signUpAt) {
+          existing.signUpAt = event.signUpAt;
+        }
+        if (event.os && !existing.os.includes(event.os)) {
+          existing.os.push(event.os);
+        }
+        existing.timezone = event.timezone ?? existing.timezone;
+        existing.language = event.language ?? existing.language;
+        existing.screenResolution = event.screenResolution ?? existing.screenResolution;
+        if (event.type === "page_view" && event.pathname) {
+          if (!existing.pagesVisited.includes(event.pathname)) {
+            existing.pagesVisited = [...existing.pagesVisited, event.pathname].slice(0, 10);
+          }
         }
       } else {
         users.set(event.userEmail, {
           email: event.userEmail,
           name: event.userName || event.userEmail,
+          image: event.userImage,
+          phone: event.userPhone,
           visits: event.type === "page_view" ? 1 : 0,
           analyses: event.type === "analysis" ? 1 : 0,
+          signIns: event.type === "sign_in" ? 1 : 0,
           lastSeen: event.createdAt,
+          firstSeen: event.createdAt,
+          signUpAt: event.type === "sign_in" ? event.signUpAt : undefined,
           location,
+          lastDevice: formatDevice(event),
+          lastBrowser: event.browser || "Unknown",
           providers: event.provider ? [event.provider] : [],
+          devices: event.deviceType ? [event.deviceType] : [],
+          browsers: event.browser ? [event.browser] : [],
+          lastScore: event.type === "analysis" ? event.score : undefined,
+          lastGrade: event.type === "analysis" ? event.grade : undefined,
+          lastRole: event.type === "analysis" ? event.detectedRole : undefined,
+          os: event.os ? [event.os] : [],
+          timezone: event.timezone,
+          language: event.language,
+          screenResolution: event.screenResolution,
+          pagesVisited: event.type === "page_view" && event.pathname ? [event.pathname] : [],
         });
       }
     }

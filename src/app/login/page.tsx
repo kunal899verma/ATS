@@ -14,9 +14,6 @@ function LoginInner() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/analyze";
   const [loading, setLoading] = useState(false);
-  const [testEmail, setTestEmail] = useState("");
-  const [testPassword, setTestPassword] = useState("");
-  const [credError, setCredError] = useState("");
 
   useEffect(() => {
     if (session) router.replace(callbackUrl);
@@ -25,24 +22,6 @@ function LoginInner() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     await signIn("google", { callbackUrl });
-  };
-
-  const handleCredentialsSignIn = async (e: { preventDefault: () => void }) => {
-    e.preventDefault();
-    setCredError("");
-    setLoading(true);
-    const result = await signIn("credentials", {
-      email: testEmail,
-      password: testPassword,
-      callbackUrl,
-      redirect: false,
-    });
-    setLoading(false);
-    if (result?.error) {
-      setCredError("Invalid email or password");
-    } else if (result?.url) {
-      router.replace(result.url);
-    }
   };
 
   if (status === "loading") {
@@ -148,43 +127,6 @@ function LoginInner() {
           )}
           {loading ? "Signing in…" : "Continue with Google"}
         </motion.button>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-5">
-          <div className="flex-1 h-px bg-white/6" />
-          <span className="text-slate-600 text-xs">or test account</span>
-          <div className="flex-1 h-px bg-white/6" />
-        </div>
-
-        {/* Test credentials form */}
-        <form onSubmit={handleCredentialsSignIn} className="space-y-3">
-          <div className="px-3 py-2 rounded-lg bg-amber-500/8 border border-amber-500/20 text-amber-300 text-xs">
-            🧪 Test login — <strong>admin@test.com</strong> / <strong>test1234</strong>
-          </div>
-          <input
-            type="email"
-            placeholder="Email"
-            value={testEmail}
-            onChange={(e) => setTestEmail(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={testPassword}
-            onChange={(e) => setTestPassword(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50"
-          />
-          {credError && <p className="text-red-400 text-xs">{credError}</p>}
-          <motion.button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/25 text-cyan-300 hover:bg-indigo-500/20 text-sm font-medium transition-colors disabled:opacity-50"
-            whileTap={{ scale: 0.97 }}
-          >
-            {loading ? "Signing in…" : "Sign in with test account"}
-          </motion.button>
-        </form>
 
         <div className="flex items-center gap-3 my-5">
           <div className="flex-1 h-px bg-white/6" />
