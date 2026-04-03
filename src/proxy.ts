@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-// Simple in-memory rate limiter for the analyze API
-// For production scale, replace with Redis (Upstash) — this works for Vercel Serverless
+// ── Rate limiter for /api/analyze ────────────────────────────────────────────
 const rateMap = new Map<string, { count: number; resetAt: number }>();
+const WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS = 10;
 
-const WINDOW_MS = 60 * 1000; // 1 minute window
-const MAX_REQUESTS = 10;       // 10 analyze requests per minute per IP
-
-export function proxy(req: NextRequest) {
-  // Only rate-limit the analyze API endpoint
-  if (!req.nextUrl.pathname.startsWith("/api/analyze")) {
-    return NextResponse.next();
-  }
+function applyRateLimit(req: NextRequest): NextResponse | null {
+  if (!req.nextUrl.pathname.startsWith("/api/analyze")) return null;
 
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -23,7 +19,7 @@ export function proxy(req: NextRequest) {
 
   if (!entry || now > entry.resetAt) {
     rateMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return NextResponse.next();
+    return null;
   }
 
   if (entry.count >= MAX_REQUESTS) {
@@ -44,9 +40,68 @@ export function proxy(req: NextRequest) {
   }
 
   entry.count += 1;
+  return null;
+}
+
+// ── Auth guard (production only) ─────────────────────────────────────────────
+const PUBLIC_PREFIXES = [
+  "/api/auth",
+  "/api/analytics",
+  "/_next",
+  "/favicon",
+  "/robots",
+  "/sitemap",
+  "/og",
+  "/login",
+];
+const PUBLIC_EXACT = ["/"];
+
+function isPublic(pathname: string): boolean {
+  if (PUBLIC_EXACT.includes(pathname)) return true;
+  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+function isLocalhost(req: NextRequest): boolean {
+  const host = req.headers.get("host") ?? "";
+  return host.startsWith("localhost") || host.startsWith("127.0.0.1");
+}
+
+async function applyAuthGuard(req: NextRequest): Promise<NextResponse | null> {
+  const { pathname } = req.nextUrl;
+
+  if (isPublic(pathname)) return null;
+  if (isLocalhost(req)) return null;
+
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    cookieName: "__Secure-authjs.session-token",
+    secureCookie: true,
+  });
+
+  if (!token) {
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return null;
+}
+
+// ── Main proxy export ─────────────────────────────────────────────────────────
+export async function proxy(req: NextRequest) {
+  const rateLimitRes = applyRateLimit(req);
+  if (rateLimitRes) return rateLimitRes;
+
+  const authRes = await applyAuthGuard(req);
+  if (authRes) return authRes;
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)).*)",
+  ],
 };

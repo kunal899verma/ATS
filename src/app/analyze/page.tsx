@@ -191,11 +191,12 @@ export default function AnalyzePage() {
       <div className="fixed bottom-1/3 right-1/4 w-80 h-80 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
-        className="page-shell max-w-2xl pt-24 sm:pt-28 pb-16 sm:pb-20"
+        className="page-shell pt-24 sm:pt-28 pb-16 sm:pb-20"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
+      <div className="max-w-4xl mx-auto">
 
         {/* Header */}
         <div className="page-hero page-hero-compact mb-10">
@@ -280,7 +281,7 @@ export default function AnalyzePage() {
               <div className="space-y-4">
                 {/* Drop zone */}
                 <motion.div
-                  className={`relative upload-zone rounded-xl p-6 sm:p-10 text-center transition-all ${isDragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
+                  className={`relative upload-zone rounded-xl p-5 sm:p-6 text-center transition-all ${isDragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={() => setIsDragging(false)}
@@ -326,11 +327,11 @@ export default function AnalyzePage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-white/4 border border-white/8 flex items-center justify-center">
-                        <Upload className="w-7 h-7 text-indigo-400" />
+                      <div className="w-12 h-12 rounded-2xl bg-white/4 border border-white/8 flex items-center justify-center">
+                        <Upload className="w-5 h-5 text-indigo-400" />
                       </div>
                       <div>
-                        <p className="text-white font-semibold text-lg">Drop your resume here</p>
+                        <p className="text-white font-semibold text-base">Drop your resume here</p>
                         <p className="text-slate-500 text-sm mt-1">or click to browse your files</p>
                       </div>
                       <div className="flex gap-2">
@@ -606,6 +607,7 @@ Senior Software Engineer at Acme Corp (2021–Present)
             </div>
           )}
         </div>
+      </div>
       </motion.div>
       {/* Auth gate modal */}
       {showAuthGate && (
