@@ -39,6 +39,7 @@ export interface AnalyticsEvent {
 
 export interface AnalyticsSnapshot {
   configured: boolean;
+  storageError?: string;
   recentEvents: AnalyticsEvent[];
   totalEvents: number;
   totalPageViews: number;
@@ -74,6 +75,23 @@ export interface AnalyticsSnapshot {
     screenResolution?: string;
     pagesVisited: string[];
   }>;
+}
+
+function createEmptySnapshot(configured = isAnalyticsStorageConfigured(), storageError?: string): AnalyticsSnapshot {
+  return {
+    configured,
+    storageError,
+    recentEvents: [],
+    totalEvents: 0,
+    totalPageViews: 0,
+    uniqueVisitors: 0,
+    signedInUsers: 0,
+    analysesRun: 0,
+    signIns: 0,
+    topPages: [],
+    topLocations: [],
+    recentUsers: [],
+  };
 }
 
 function getBlobToken() {
@@ -229,29 +247,34 @@ export async function getRecentAnalyticsEvents(limit = 120) {
   const token = getBlobToken();
   if (!token) return [];
 
-  const blobs = [];
-  let cursor: string | undefined;
+  try {
+    const blobs = [];
+    let cursor: string | undefined;
 
-  while (blobs.length < limit) {
-    const page = await list({
-      token,
-      prefix: `${ANALYTICS_PREFIX}/`,
-      limit: Math.min(limit, 100),
-      cursor,
-    });
+    while (blobs.length < limit) {
+      const page = await list({
+        token,
+        prefix: `${ANALYTICS_PREFIX}/`,
+        limit: Math.min(limit, 100),
+        cursor,
+      });
 
-    blobs.push(...page.blobs);
+      blobs.push(...page.blobs);
 
-    if (!page.hasMore || !page.cursor) break;
-    cursor = page.cursor;
+      if (!page.hasMore || !page.cursor) break;
+      cursor = page.cursor;
+    }
+
+    const recent = blobs
+      .sort((a, b) => b.pathname.localeCompare(a.pathname))
+      .slice(0, limit);
+
+    const events = await Promise.all(recent.map((blob) => readAnalyticsEvent(blob.pathname)));
+    return events.filter((event): event is AnalyticsEvent => Boolean(event));
+  } catch (error) {
+    console.error("[ANALYTICS_LIST_ERROR]", error);
+    return [];
   }
-
-  const recent = blobs
-    .sort((a, b) => b.pathname.localeCompare(a.pathname))
-    .slice(0, limit);
-
-  const events = await Promise.all(recent.map((blob) => readAnalyticsEvent(blob.pathname)));
-  return events.filter((event): event is AnalyticsEvent => Boolean(event));
 }
 
 function takeTopEntries(source: Map<string, number>, limit = 6) {
@@ -270,119 +293,124 @@ function formatDevice(event: AnalyticsEvent) {
 }
 
 export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapshot> {
-  const events = await getRecentAnalyticsEvents(limit);
+  try {
+    const events = await getRecentAnalyticsEvents(limit);
 
-  const visitorIds = new Set<string>();
-  const signedInUsers = new Set<string>();
-  const topPages = new Map<string, number>();
-  const topLocations = new Map<string, number>();
-  const users = new Map<string, AnalyticsSnapshot["recentUsers"][number]>();
+    const visitorIds = new Set<string>();
+    const signedInUsers = new Set<string>();
+    const topPages = new Map<string, number>();
+    const topLocations = new Map<string, number>();
+    const users = new Map<string, AnalyticsSnapshot["recentUsers"][number]>();
 
-  let totalPageViews = 0;
-  let analysesRun = 0;
-  let signIns = 0;
+    let totalPageViews = 0;
+    let analysesRun = 0;
+    let signIns = 0;
 
-  for (const event of events) {
-    visitorIds.add(event.visitorId);
+    for (const event of events) {
+      visitorIds.add(event.visitorId);
 
-    if (event.type === "page_view") {
-      totalPageViews += 1;
-      if (event.pathname) {
-        topPages.set(event.pathname, (topPages.get(event.pathname) ?? 0) + 1);
+      if (event.type === "page_view") {
+        totalPageViews += 1;
+        if (event.pathname) {
+          topPages.set(event.pathname, (topPages.get(event.pathname) ?? 0) + 1);
+        }
       }
-    }
 
-    if (event.type === "analysis") analysesRun += 1;
-    if (event.type === "sign_in") signIns += 1;
+      if (event.type === "analysis") analysesRun += 1;
+      if (event.type === "sign_in") signIns += 1;
 
-    const location = formatLocation(event);
-    topLocations.set(location, (topLocations.get(location) ?? 0) + 1);
+      const location = formatLocation(event);
+      topLocations.set(location, (topLocations.get(location) ?? 0) + 1);
 
-    if (event.userEmail) {
-      signedInUsers.add(event.userEmail);
-      const existing = users.get(event.userEmail);
+      if (event.userEmail) {
+        signedInUsers.add(event.userEmail);
+        const existing = users.get(event.userEmail);
 
-      if (existing) {
-        existing.visits += event.type === "page_view" ? 1 : 0;
-        existing.analyses += event.type === "analysis" ? 1 : 0;
-        existing.signIns += event.type === "sign_in" ? 1 : 0;
-        existing.lastSeen = event.createdAt > existing.lastSeen ? event.createdAt : existing.lastSeen;
-        existing.firstSeen = event.createdAt < existing.firstSeen ? event.createdAt : existing.firstSeen;
-        existing.location = location !== "Unknown" ? location : existing.location;
-        existing.lastDevice = formatDevice(event) !== "Unknown" ? formatDevice(event) : existing.lastDevice;
-        existing.lastBrowser = event.browser || existing.lastBrowser;
-        existing.image = event.userImage || existing.image;
-        existing.phone = event.userPhone || existing.phone;
-        if (event.provider && !existing.providers.includes(event.provider)) {
-          existing.providers.push(event.provider);
-        }
-        if (event.deviceType && !existing.devices.includes(event.deviceType)) {
-          existing.devices.push(event.deviceType);
-        }
-        if (event.browser && !existing.browsers.includes(event.browser)) {
-          existing.browsers.push(event.browser);
-        }
-        if (event.type === "analysis") {
-          existing.lastScore = event.score ?? existing.lastScore;
-          existing.lastGrade = event.grade ?? existing.lastGrade;
-          existing.lastRole = event.detectedRole ?? existing.lastRole;
-        }
-        if (event.type === "sign_in" && event.signUpAt) {
-          existing.signUpAt = event.signUpAt;
-        }
-        if (event.os && !existing.os.includes(event.os)) {
-          existing.os.push(event.os);
-        }
-        existing.timezone = event.timezone ?? existing.timezone;
-        existing.language = event.language ?? existing.language;
-        existing.screenResolution = event.screenResolution ?? existing.screenResolution;
-        if (event.type === "page_view" && event.pathname) {
-          if (!existing.pagesVisited.includes(event.pathname)) {
-            existing.pagesVisited = [...existing.pagesVisited, event.pathname].slice(0, 10);
+        if (existing) {
+          existing.visits += event.type === "page_view" ? 1 : 0;
+          existing.analyses += event.type === "analysis" ? 1 : 0;
+          existing.signIns += event.type === "sign_in" ? 1 : 0;
+          existing.lastSeen = event.createdAt > existing.lastSeen ? event.createdAt : existing.lastSeen;
+          existing.firstSeen = event.createdAt < existing.firstSeen ? event.createdAt : existing.firstSeen;
+          existing.location = location !== "Unknown" ? location : existing.location;
+          existing.lastDevice = formatDevice(event) !== "Unknown" ? formatDevice(event) : existing.lastDevice;
+          existing.lastBrowser = event.browser || existing.lastBrowser;
+          existing.image = event.userImage || existing.image;
+          existing.phone = event.userPhone || existing.phone;
+          if (event.provider && !existing.providers.includes(event.provider)) {
+            existing.providers.push(event.provider);
           }
+          if (event.deviceType && !existing.devices.includes(event.deviceType)) {
+            existing.devices.push(event.deviceType);
+          }
+          if (event.browser && !existing.browsers.includes(event.browser)) {
+            existing.browsers.push(event.browser);
+          }
+          if (event.type === "analysis") {
+            existing.lastScore = event.score ?? existing.lastScore;
+            existing.lastGrade = event.grade ?? existing.lastGrade;
+            existing.lastRole = event.detectedRole ?? existing.lastRole;
+          }
+          if (event.type === "sign_in" && event.signUpAt) {
+            existing.signUpAt = event.signUpAt;
+          }
+          if (event.os && !existing.os.includes(event.os)) {
+            existing.os.push(event.os);
+          }
+          existing.timezone = event.timezone ?? existing.timezone;
+          existing.language = event.language ?? existing.language;
+          existing.screenResolution = event.screenResolution ?? existing.screenResolution;
+          if (event.type === "page_view" && event.pathname) {
+            if (!existing.pagesVisited.includes(event.pathname)) {
+              existing.pagesVisited = [...existing.pagesVisited, event.pathname].slice(0, 10);
+            }
+          }
+        } else {
+          users.set(event.userEmail, {
+            email: event.userEmail,
+            name: event.userName || event.userEmail,
+            image: event.userImage,
+            phone: event.userPhone,
+            visits: event.type === "page_view" ? 1 : 0,
+            analyses: event.type === "analysis" ? 1 : 0,
+            signIns: event.type === "sign_in" ? 1 : 0,
+            lastSeen: event.createdAt,
+            firstSeen: event.createdAt,
+            signUpAt: event.type === "sign_in" ? event.signUpAt : undefined,
+            location,
+            lastDevice: formatDevice(event),
+            lastBrowser: event.browser || "Unknown",
+            providers: event.provider ? [event.provider] : [],
+            devices: event.deviceType ? [event.deviceType] : [],
+            browsers: event.browser ? [event.browser] : [],
+            lastScore: event.type === "analysis" ? event.score : undefined,
+            lastGrade: event.type === "analysis" ? event.grade : undefined,
+            lastRole: event.type === "analysis" ? event.detectedRole : undefined,
+            os: event.os ? [event.os] : [],
+            timezone: event.timezone,
+            language: event.language,
+            screenResolution: event.screenResolution,
+            pagesVisited: event.type === "page_view" && event.pathname ? [event.pathname] : [],
+          });
         }
-      } else {
-        users.set(event.userEmail, {
-          email: event.userEmail,
-          name: event.userName || event.userEmail,
-          image: event.userImage,
-          phone: event.userPhone,
-          visits: event.type === "page_view" ? 1 : 0,
-          analyses: event.type === "analysis" ? 1 : 0,
-          signIns: event.type === "sign_in" ? 1 : 0,
-          lastSeen: event.createdAt,
-          firstSeen: event.createdAt,
-          signUpAt: event.type === "sign_in" ? event.signUpAt : undefined,
-          location,
-          lastDevice: formatDevice(event),
-          lastBrowser: event.browser || "Unknown",
-          providers: event.provider ? [event.provider] : [],
-          devices: event.deviceType ? [event.deviceType] : [],
-          browsers: event.browser ? [event.browser] : [],
-          lastScore: event.type === "analysis" ? event.score : undefined,
-          lastGrade: event.type === "analysis" ? event.grade : undefined,
-          lastRole: event.type === "analysis" ? event.detectedRole : undefined,
-          os: event.os ? [event.os] : [],
-          timezone: event.timezone,
-          language: event.language,
-          screenResolution: event.screenResolution,
-          pagesVisited: event.type === "page_view" && event.pathname ? [event.pathname] : [],
-        });
       }
     }
-  }
 
-  return {
-    configured: isAnalyticsStorageConfigured(),
-    recentEvents: events,
-    totalEvents: events.length,
-    totalPageViews,
-    uniqueVisitors: visitorIds.size,
-    signedInUsers: signedInUsers.size,
-    analysesRun,
-    signIns,
-    topPages: takeTopEntries(topPages),
-    topLocations: takeTopEntries(topLocations),
-    recentUsers: [...users.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 12),
-  };
+    return {
+      configured: isAnalyticsStorageConfigured(),
+      recentEvents: events,
+      totalEvents: events.length,
+      totalPageViews,
+      uniqueVisitors: visitorIds.size,
+      signedInUsers: signedInUsers.size,
+      analysesRun,
+      signIns,
+      topPages: takeTopEntries(topPages),
+      topLocations: takeTopEntries(topLocations),
+      recentUsers: [...users.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 12),
+    };
+  } catch (error) {
+    console.error("[ANALYTICS_SNAPSHOT_ERROR]", error);
+    return createEmptySnapshot(isAnalyticsStorageConfigured(), "Analytics storage is temporarily unavailable.");
+  }
 }

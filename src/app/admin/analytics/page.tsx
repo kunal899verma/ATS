@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -93,11 +94,12 @@ function ProviderBadge({ provider }: { provider: string }) {
 
 function Avatar({ name, image }: { name: string; image?: string }) {
   if (image) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
-      <img
+      <Image
         src={image}
         alt={name}
+        width={40}
+        height={40}
         className="h-10 w-10 rounded-full object-cover ring-1 ring-white/10 flex-shrink-0"
       />
     );
@@ -361,6 +363,15 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
         </section>
+
+        {snapshot.storageError && (
+          <section className="glass-card border border-amber-500/20 bg-amber-500/[0.05] p-5">
+            <h2 className="text-sm font-semibold text-amber-200">Analytics storage warning</h2>
+            <p className="mt-2 text-sm leading-relaxed text-amber-100/80">
+              {snapshot.storageError} The dashboard is showing a safe empty state instead of crashing.
+            </p>
+          </section>
+        )}
 
         {/* Summary cards */}
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

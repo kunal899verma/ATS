@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
 
 // ── Rate limiter for /api/analyze ────────────────────────────────────────────
 const rateMap = new Map<string, { count: number; resetAt: number }>();
@@ -44,6 +43,9 @@ function applyRateLimit(req: NextRequest): NextResponse | null {
 }
 
 // ── Auth guard (production only) ─────────────────────────────────────────────
+// NextAuth v5 uses JWE-encrypted tokens — getToken() from next-auth/jwt (v4)
+// cannot decrypt them. We check cookie presence here; the real session
+// validation (isAdminEmail, etc.) still happens inside each page via auth().
 const PUBLIC_PREFIXES = [
   "/api/auth",
   "/api/analytics",
@@ -66,35 +68,34 @@ function isLocalhost(req: NextRequest): boolean {
   return host.startsWith("localhost") || host.startsWith("127.0.0.1");
 }
 
-async function applyAuthGuard(req: NextRequest): Promise<NextResponse | null> {
+function hasSessionCookie(req: NextRequest): boolean {
+  // NextAuth v5 uses __Secure-authjs.session-token on HTTPS (production)
+  // and authjs.session-token on HTTP (development)
+  return (
+    req.cookies.has("__Secure-authjs.session-token") ||
+    req.cookies.has("authjs.session-token")
+  );
+}
+
+function applyAuthGuard(req: NextRequest): NextResponse | null {
   const { pathname } = req.nextUrl;
 
   if (isPublic(pathname)) return null;
   if (isLocalhost(req)) return null;
+  if (hasSessionCookie(req)) return null;
 
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET,
-    cookieName: "__Secure-authjs.session-token",
-    secureCookie: true,
-  });
-
-  if (!token) {
-    const loginUrl = req.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return null;
+  const loginUrl = req.nextUrl.clone();
+  loginUrl.pathname = "/login";
+  loginUrl.searchParams.set("callbackUrl", pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 // ── Main proxy export ─────────────────────────────────────────────────────────
-export async function proxy(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const rateLimitRes = applyRateLimit(req);
   if (rateLimitRes) return rateLimitRes;
 
-  const authRes = await applyAuthGuard(req);
+  const authRes = applyAuthGuard(req);
   if (authRes) return authRes;
 
   return NextResponse.next();
