@@ -30,7 +30,6 @@ import {
   Sparkles, AlertCircle, Users, Share2, Printer, Clock,
   BarChart3, History, X, Wand2, Copy, CheckCheck,
   BookOpen, Target, Star, Lightbulb, ArrowRight, Trophy, Code2, ExternalLink, FileDown,
-  FileText, MessageSquare,
 } from "lucide-react";
 
 // Dynamically import recharts charts (avoids hydration mismatch)
@@ -62,23 +61,6 @@ const STATUS_CONFIG = {
 const EFFORT_LABEL = { easy: "Quick fix", medium: "30 min", hard: "1–2 hrs" };
 const EFFORT_COLOR = { easy: "text-emerald-400", medium: "text-amber-400", hard: "text-orange-400" };
 
-type RecommendedAction =
-  | {
-      kind: "action";
-      label: string;
-      description: string;
-      buttonLabel: string;
-      accent: string;
-      onClick: () => void;
-    }
-  | {
-      kind: "link";
-      label: string;
-      description: string;
-      buttonLabel: string;
-      accent: string;
-      href: string;
-    };
 
 function getScoreContext(score: number) {
   if (score >= 85) return { headline: "Top 10% — Outstanding", subtext: "Your resume is highly optimized. Focus on tailoring the summary and you're ready to apply.", color: "text-cyan-400", level: "🏆" };
@@ -309,33 +291,6 @@ export default function ResultsPage() {
   const keywords = showAllKeywords
     ? result.keywordAnalysis.matches
     : result.keywordAnalysis.matches.slice(0, 20);
-  const recommendedAction: RecommendedAction =
-    criticalCount > 0
-      ? {
-          kind: "action",
-          label: "Fix critical issues first",
-          description: "Start with the highest-impact resume fixes before generating new application materials.",
-          buttonLabel: `Open Fix List (${criticalCount})`,
-          accent: "border-red-500/20 bg-red-500/[0.04] text-red-300",
-          onClick: () => handleTabChange("suggestions"),
-        }
-      : result.keywordAnalysis.topMissingKeywords.length > 0
-        ? {
-            kind: "action",
-            label: "Review missing keywords next",
-            description: "Your resume is close, but the job-specific language still needs tightening before you apply.",
-            buttonLabel: "Open Keywords",
-            accent: "border-amber-500/20 bg-amber-500/[0.04] text-amber-300",
-            onClick: () => handleTabChange("keywords"),
-          }
-        : {
-            kind: "link",
-            label: "You look ready to tailor this application",
-            description: "Your next best move is to reuse this resume in the Cover Letter and Interview Prep tools.",
-            buttonLabel: "Generate Cover Letter",
-            accent: "border-emerald-500/20 bg-emerald-500/[0.04] text-emerald-300",
-            href: "/cover-letter",
-          };
 
   return (
     <main className="min-h-screen bg-[var(--bg-primary)]" ref={printRef}>
@@ -386,62 +341,6 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Quick Actions — Connected Flow */}
-        <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-3 print:hidden">
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Recommended Next Step</p>
-          <div className="glass-card border border-white/[0.06] p-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${recommendedAction.accent}`}>
-                  Recommended
-                </span>
-                <h3 className="mt-3 text-white text-lg font-semibold">{recommendedAction.label}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-slate-400 max-w-2xl">{recommendedAction.description}</p>
-              </div>
-              {recommendedAction.kind === "link" ? (
-                <Link
-                  href={recommendedAction.href}
-                  className="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold"
-                >
-                  {recommendedAction.buttonLabel}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={recommendedAction.onClick}
-                  className="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold"
-                >
-                  {recommendedAction.buttonLabel}
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                href="/cover-letter"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-medium hover:bg-violet-500/15 transition-colors"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                Cover Letter
-              </Link>
-              <Link
-                href="/interview-prep"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium hover:bg-indigo-500/15 transition-colors"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Interview Prep
-              </Link>
-              <Link
-                href="/templates"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/15 transition-colors"
-              >
-                <FileDown className="w-3.5 h-3.5" />
-                Resume Builder
-              </Link>
-            </div>
-          </div>
-        </div>
 
         {hasBrowserData && (
           <div className="mt-5 rounded-2xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4 print:hidden">
