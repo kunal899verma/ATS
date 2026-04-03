@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { isAdminEmail } from "@/lib/visitor-analytics";
 import {
   Zap, Menu, X, LogOut, ChevronDown,
   FileSearch, FileText, MessageSquare, LayoutTemplate,
-  Users, Lightbulb, BookOpen, DollarSign
+  Users, Lightbulb, BookOpen, DollarSign, Shield
 } from "lucide-react";
 
 const PRIMARY_NAV_LINKS = [
@@ -34,6 +35,7 @@ export default function Navbar() {
   const [resourcesOpen, setResourcesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { data: session, status } = useSession();
+  const isAdmin = isAdminEmail(session?.user?.email);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const resourcesMenuRef = useRef<HTMLDivElement>(null);
 
@@ -165,7 +167,17 @@ export default function Navbar() {
           {/* Desktop right side */}
           <div className="hidden lg:flex items-center gap-3">
             {session?.user ? (
-              <div className="relative" ref={userMenuRef}>
+              <>
+                {isAdmin && (
+                  <Link
+                    href="/admin/analytics"
+                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/15"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Analytics
+                  </Link>
+                )}
+                <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-colors"
@@ -205,6 +217,17 @@ export default function Navbar() {
                         <p className="text-white text-sm font-medium truncate">{session.user.name}</p>
                         <p className="text-slate-500 text-xs truncate">{session.user.email}</p>
                       </div>
+                      {isAdmin && (
+                        <Link
+                          href="/admin/analytics"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="mb-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-emerald-300 transition-colors hover:bg-emerald-500/10 hover:text-emerald-200"
+                          role="menuitem"
+                        >
+                          <Shield className="h-3.5 w-3.5" />
+                          Admin Analytics
+                        </Link>
+                      )}
                       <button
                         onClick={() => { setUserMenuOpen(false); signOut({ callbackUrl: "/" }); }}
                         className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/8 text-sm transition-colors"
@@ -216,7 +239,8 @@ export default function Navbar() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+                </div>
+              </>
             ) : (
               <>
                 {status !== "loading" && (
@@ -338,6 +362,16 @@ export default function Navbar() {
                         <p className="text-slate-500 text-xs">{session.user.email}</p>
                       </div>
                     </div>
+                    {isAdmin && (
+                      <Link
+                        href="/admin/analytics"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 text-sm font-medium"
+                      >
+                        <Shield className="w-4 h-4" />
+                        Admin Analytics
+                      </Link>
+                    )}
                     <button
                       onClick={() => signOut({ callbackUrl: "/" })}
                       className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-red-500/20 text-red-400 text-sm font-medium"

@@ -66,13 +66,22 @@ export function createVisitorId() {
 
 export function isAdminEmail(email?: string | null) {
   if (!email) return false;
+  const normalize = (value: string) => {
+    const trimmed = value.trim().toLowerCase();
+    const [localPart, domain = ""] = trimmed.split("@");
+    const normalizedLocal = localPart.includes("+")
+      ? localPart.split("+")[0]
+      : localPart;
+    return domain ? `${normalizedLocal}@${domain}` : trimmed;
+  };
+
   const configured = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
+    .split(/[,\n]/)
+    .map((value) => normalize(value))
     .filter(Boolean);
 
   const allowList = new Set(["admin@test.com", ...configured]);
-  return allowList.has(email.toLowerCase());
+  return allowList.has(normalize(email));
 }
 
 export function getGeoDetails(headers: Headers) {

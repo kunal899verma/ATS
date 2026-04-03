@@ -61,6 +61,9 @@ export default async function AdminAnalyticsPage() {
             <p className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 font-mono text-xs text-slate-300">
               ADMIN_EMAILS={session.user.email}
             </p>
+            <p className="mt-3 text-xs text-slate-500">
+              Signed in as: {session.user.email}
+            </p>
           </div>
         </div>
       </main>
