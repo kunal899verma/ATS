@@ -14,7 +14,7 @@ import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
 
 export const metadata: Metadata = {
   title: "ResumeATS Pricing — 100% Free ATS Resume Checker | ResumeATS",
-  description: "ResumeATS is completely free — unlimited ATS analyses, AI cover letters, interview prep, and resume building. See how we compare to Jobscan ($49/month) and others.",
+  description: "ResumeATS is completely free — unlimited ATS analyses, AI cover letters, interview prep, and resume building in one workflow.",
 };
 
 const FREE_FEATURES = [
@@ -31,30 +31,30 @@ const FREE_FEATURES = [
 ];
 
 const COMPARISON = [
-  { feature: "ATS Score", us: true, jobscan: true, resumeWorded: true, teal: true },
-  { feature: "AI Cover Letter Generator", us: true, jobscan: false, resumeWorded: false, teal: true },
-  { feature: "AI Interview Prep", us: true, jobscan: false, resumeWorded: false, teal: false },
-  { feature: "AI Resume Coach", us: true, jobscan: false, resumeWorded: false, teal: false },
-  { feature: "Synonym-aware matching", us: true, jobscan: false, resumeWorded: false, teal: false },
-  { feature: "Recruiter readability score", us: true, jobscan: false, resumeWorded: false, teal: false },
-  { feature: "Resume Builder + PDF", us: true, jobscan: false, resumeWorded: true, teal: true },
-  { feature: "Batch recruiter analysis", us: true, jobscan: false, resumeWorded: false, teal: false },
-  { feature: "Career intelligence", us: true, jobscan: false, resumeWorded: false, teal: false },
-  { feature: "No account required", us: true, jobscan: false, resumeWorded: false, teal: false },
-  { feature: "Completely free", us: true, jobscan: false, resumeWorded: false, teal: false },
+  { feature: "ATS Score", us: true, paidTools: true, builderSuites: true, trackerSuites: true },
+  { feature: "AI Cover Letter Generator", us: true, paidTools: false, builderSuites: false, trackerSuites: true },
+  { feature: "AI Interview Prep", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
+  { feature: "AI Resume Coach", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
+  { feature: "Synonym-aware matching", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
+  { feature: "Recruiter readability score", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
+  { feature: "Resume Builder + PDF", us: true, paidTools: false, builderSuites: true, trackerSuites: true },
+  { feature: "Batch recruiter analysis", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
+  { feature: "Career intelligence", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
+  { feature: "No account required", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
+  { feature: "Completely free", us: true, paidTools: false, builderSuites: false, trackerSuites: false },
 ];
 
 const TESTIMONIALS = [
   {
     name: "Aisha R.",
     role: "Senior Software Engineer",
-    text: "I was paying $50/month for Jobscan. This does the same thing — actually better because of the synonym matching — for free.",
+    text: "I was tired of paying monthly for basic ATS checks. This gave me sharper feedback, better keyword handling, and I did not need a subscription anymore.",
     stars: 5,
   },
   {
     name: "Marcus T.",
     role: "Product Manager",
-    text: "The recruiter readability score alone is worth more than anything Jobscan gives me. And the AI cover letter generator? Game changer.",
+    text: "The recruiter readability score alone made this feel more useful than the other tools I had tried. The cover letter generator sealed it for me.",
     stars: 5,
   },
 ];
@@ -80,8 +80,8 @@ export default function PricingPage() {
               <span className="gradient-text">Zero Price Tag.</span>
             </h1>
             <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
-              Job searching is already hard enough. Resume tools shouldn&apos;t cost $50/month.
-              ResumeATS is free — not a &quot;freemium&quot; with 3 free scans. Actually free.
+              Job searching is already hard enough. Resume tools should not feel gated behind subscriptions.
+              ResumeATS is free — not a &quot;freemium&quot; product with tiny limits. Actually free.
             </p>
           </div>
         </FadeIn>
@@ -139,12 +139,12 @@ export default function PricingPage() {
             </FadeIn>
           </div>
 
-          {/* Competitors */}
+          {/* Typical alternatives */}
           <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
             {[
-              { name: "Jobscan", sub: "Most popular paid tool", price: "$49", period: "/ month", yearly: "$588 / year",
+              { name: "Typical ATS checker", sub: "Keyword-first paid tool", price: "$49", period: "/ month", yearly: "$588 / year",
                 items: ["ATS score", "Keyword matching (exact only)", "Limited free scans", "Account required", "No AI features", "No recruiter score"] },
-              { name: "Teal", sub: "Job tracker + resume", price: "$9", period: "/ month", yearly: "$108 / year",
+              { name: "Typical tracker suite", sub: "Job tracker + resume workflow", price: "$9", period: "/ month", yearly: "$108 / year",
                 items: ["Basic ATS score", "AI cover letter", "Resume builder", "Account required", "No synonym matching", "No recruiter readability"] },
             ].map((comp) => (
               <div key={comp.name} className="glass-card border border-white/[0.06] p-6 opacity-60">
@@ -173,16 +173,16 @@ export default function PricingPage() {
         {/* Feature comparison table */}
         <FadeIn delay={0.1}>
           <div className="mb-16">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'var(--font-display)' }}>Full Feature Comparison</h2>
+            <h2 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'var(--font-display)' }}>Workflow Comparison</h2>
             <div className="glass-card border border-white/[0.06] overflow-x-auto">
               <table className="w-full min-w-[500px]">
                 <thead>
                   <tr className="border-b border-white/5 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <th className="p-3 sm:p-4 text-left w-[36%]">Feature</th>
                     <th className="p-3 sm:p-4 text-center text-indigo-400">ResumeATS</th>
-                    <th className="p-3 sm:p-4 text-center">Jobscan</th>
-                    <th className="p-3 sm:p-4 text-center">ResumeWorded</th>
-                    <th className="p-3 sm:p-4 text-center">Teal</th>
+                    <th className="p-3 sm:p-4 text-center">Typical paid ATS tool</th>
+                    <th className="p-3 sm:p-4 text-center">Builder-first suite</th>
+                    <th className="p-3 sm:p-4 text-center">Tracker-first suite</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -196,13 +196,13 @@ export default function PricingPage() {
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" />
                       </td>
                       <td className="p-3 sm:p-4 text-center">
-                        {row.jobscan ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <XCircle className="w-4 h-4 text-red-400/40 mx-auto" />}
+                        {row.paidTools ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <XCircle className="w-4 h-4 text-red-400/40 mx-auto" />}
                       </td>
                       <td className="p-3 sm:p-4 text-center">
-                        {row.resumeWorded ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <XCircle className="w-4 h-4 text-red-400/40 mx-auto" />}
+                        {row.builderSuites ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <XCircle className="w-4 h-4 text-red-400/40 mx-auto" />}
                       </td>
                       <td className="p-3 sm:p-4 text-center">
-                        {row.teal ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <XCircle className="w-4 h-4 text-red-400/40 mx-auto" />}
+                        {row.trackerSuites ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <XCircle className="w-4 h-4 text-red-400/40 mx-auto" />}
                       </td>
                     </tr>
                   ))}
@@ -211,9 +211,9 @@ export default function PricingPage() {
                   <tr className="bg-indigo-500/[0.04] border-t border-indigo-500/15">
                     <td className="p-3 sm:p-4 text-slate-400 text-xs font-semibold">Price</td>
                     <td className="p-3 sm:p-4 text-center text-indigo-400 text-xs font-bold">FREE</td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$49/mo</td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$29/mo</td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$9/mo</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">Often paid</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">Usually paid</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">Often freemium</td>
                   </tr>
                 </tfoot>
               </table>
@@ -232,7 +232,7 @@ export default function PricingPage() {
               </p>
               <p>
                 We built ResumeATS because the tools that should exist — honest scoring, smart matching,
-                AI-powered improvements — shouldn&apos;t cost $50/month. Job searching is stressful enough.
+                and AI-powered improvements — should not feel paywalled. Job searching is stressful enough.
               </p>
               <p className="text-slate-300 font-medium">
                 We believe job seekers shouldn&apos;t pay to fix their resumes. Zero ads. Zero selling your data.

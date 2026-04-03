@@ -1,8 +1,10 @@
 /**
  * User data store — works immediately via Vercel logs.
- * To add persistent storage, uncomment the Vercel KV section below
- * and add @vercel/kv to your project.
+ * For a richer owner dashboard, analytics events are also mirrored to Blob storage
+ * when BLOB_READ_WRITE_TOKEN is configured.
  */
+
+import { createVisitorId, writeAnalyticsEvent } from "@/lib/visitor-analytics";
 
 export interface UserRecord {
   name: string;
@@ -25,8 +27,17 @@ export interface AnalysisRecord {
 export async function saveUser(user: UserRecord): Promise<void> {
   // Visible in Vercel Dashboard → Logs → search "NEW_USER"
   console.log("[NEW_USER]", JSON.stringify(user));
+  await writeAnalyticsEvent({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: "sign_in",
+    createdAt: new Date().toISOString(),
+    visitorId: createVisitorId(),
+    userEmail: user.email,
+    userName: user.name,
+    provider: user.provider,
+  });
 
-  // ── Vercel KV (uncomment after running: npm i @vercel/kv) ─────────────────
+  // ── Example persistent storage adapters (optional) ────────────────────────
   // import { kv } from "@vercel/kv";
   // const key = `user:${user.email}`;
   // const existing = await kv.hget(key, "email");
@@ -45,8 +56,20 @@ export async function saveUser(user: UserRecord): Promise<void> {
 export async function trackAnalysis(record: AnalysisRecord): Promise<void> {
   // Visible in Vercel Dashboard → Logs → search "USER_ANALYSIS"
   console.log("[USER_ANALYSIS]", JSON.stringify(record));
+  await writeAnalyticsEvent({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: "analysis",
+    createdAt: record.analyzedAt,
+    visitorId: createVisitorId(),
+    userEmail: record.email,
+    userName: record.email,
+    score: record.score,
+    grade: record.grade,
+    detectedRole: record.detectedRole,
+    inputMode: record.inputMode,
+  });
 
-  // ── Vercel KV ──────────────────────────────────────────────────────────────
+  // ── Example persistent storage adapter ────────────────────────────────────
   // const key = `user:${record.email}`;
   // await kv.hincrby(key, "analysisCount", 1);
   // await kv.hset(key, { lastAnalysisAt: record.analyzedAt, lastScore: record.score, lastRole: record.detectedRole });

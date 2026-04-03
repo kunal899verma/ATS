@@ -142,13 +142,24 @@ const STEPS = [
   { num: "03", title: "Fix and recheck", desc: "Apply the prioritized suggestions, re-upload your resume, and watch your score climb.", numColor: "text-emerald-400", border: "border-emerald-500/15" },
 ];
 
-const HIRED_AT = ["Google", "Amazon", "Microsoft", "Meta", "Apple", "Stripe", "Netflix", "Spotify", "Uber", "Airbnb"];
+const TRUSTED_BY = [
+  "Product Teams",
+  "Growth Startups",
+  "Remote Companies",
+  "Hiring Managers",
+  "Tech Candidates",
+  "Career Switchers",
+  "Indie Founders",
+  "Operations Roles",
+  "Design Teams",
+  "Modern Workplaces",
+];
 
 const TESTIMONIALS = [
   {
     name: "Aisha R.",
     role: "Senior Software Engineer",
-    company: "FAANG",
+    company: "Top-tier tech",
     text: "I was applying for 3 months with zero callbacks. Used this tool, found out my resume was missing 14 keywords the JD required. Fixed it in an hour. Three recruiter calls the next week.",
     stars: 5,
     score: { from: 31, to: 84 },
@@ -157,7 +168,7 @@ const TESTIMONIALS = [
     name: "Marcus T.",
     role: "Product Manager",
     company: "Series B Startup",
-    text: "Jobscan charged me $50/month to tell me my score was 60%. This tool told me the same thing, free, with better suggestions. The recruiter readability score is genius.",
+    text: "I had tried paid ATS tools before, but this gave me clearer next steps for free. The recruiter readability score was the piece I was missing.",
     stars: 5,
     score: { from: 58, to: 91 },
   },
@@ -172,16 +183,16 @@ const TESTIMONIALS = [
 ];
 
 const VS_COMPARISON = [
-  { feature: "Always free, unlimited scans", us: true, jobscan: false, resumeworded: false, teal: false },
-  { feature: "No account required", us: true, jobscan: false, resumeworded: false, teal: false },
-  { feature: "AI Cover Letter Generator", us: true, jobscan: false, resumeworded: false, teal: true },
-  { feature: "AI Interview Prep", us: true, jobscan: false, resumeworded: false, teal: false },
-  { feature: "Recruiter readability score", us: true, jobscan: false, resumeworded: false, teal: false },
-  { feature: "Synonym + stemmed matching", us: true, jobscan: true, resumeworded: false, teal: false },
-  { feature: "AI Resume Coach Chat", us: true, jobscan: false, resumeworded: false, teal: false },
-  { feature: "Career intelligence insights", us: true, jobscan: false, resumeworded: false, teal: false },
-  { feature: "Resume Builder + PDF export", us: true, jobscan: false, resumeworded: true, teal: true },
-  { feature: "Batch recruiter analysis", us: true, jobscan: false, resumeworded: false, teal: false },
+  { feature: "Always free, unlimited scans", us: true, paidTools: false, templateBuilders: false, jobTrackers: false },
+  { feature: "No account required", us: true, paidTools: false, templateBuilders: false, jobTrackers: false },
+  { feature: "AI Cover Letter Generator", us: true, paidTools: false, templateBuilders: false, jobTrackers: true },
+  { feature: "AI Interview Prep", us: true, paidTools: false, templateBuilders: false, jobTrackers: false },
+  { feature: "Recruiter readability score", us: true, paidTools: false, templateBuilders: false, jobTrackers: false },
+  { feature: "Synonym + stemmed matching", us: true, paidTools: true, templateBuilders: false, jobTrackers: false },
+  { feature: "AI Resume Coach Chat", us: true, paidTools: false, templateBuilders: false, jobTrackers: false },
+  { feature: "Career intelligence insights", us: true, paidTools: false, templateBuilders: false, jobTrackers: false },
+  { feature: "Resume Builder + PDF export", us: true, paidTools: false, templateBuilders: true, jobTrackers: true },
+  { feature: "Batch recruiter analysis", us: true, paidTools: false, templateBuilders: false, jobTrackers: false },
 ];
 
 const AI_EXAMPLES = [
@@ -224,10 +235,10 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <AnimatedHeroSection />
 
-      {/* ── Hired At Bar ──────────────────────────────────────────────────────── */}
+      {/* ── Trust Bar ─────────────────────────────────────────────────────────── */}
       <section className="border-y border-white/[0.04] py-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <MarqueeBar items={HIRED_AT} />
+          <MarqueeBar items={TRUSTED_BY} />
         </div>
       </section>
 
@@ -465,7 +476,7 @@ export default function HomePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { title: "What we actually check", desc: "Keyword density, synonym coverage, section completeness, bullet quality, contact data, formatting hygiene — 25+ measurable signals." },
-                      { title: "What no tool can check", desc: "Real ATS ranking logic. Any tool claiming a Workday score or Greenhouse match % is guessing." },
+                      { title: "What no tool can check", desc: "Real ATS ranking logic. Any tool claiming a match percentage for a specific ATS vendor is still estimating." },
                       { title: "Why it still works", desc: "The signals that produce high scores here are the same ones that move you up in any ATS." },
                     ].map(({ title, desc }) => (
                       <div key={title} className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.05]">
@@ -487,9 +498,9 @@ export default function HomePage() {
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="text-center mb-12">
-              <p className="text-pink-400 text-xs font-semibold tracking-[0.2em] uppercase mb-3">Honest Comparison</p>
+              <p className="text-pink-400 text-xs font-semibold tracking-[0.2em] uppercase mb-3">Feature Snapshot</p>
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                We vs. the paid alternatives
+                What you get in one place
               </h2>
             </div>
           </FadeIn>
@@ -501,9 +512,9 @@ export default function HomePage() {
                   <tr className="border-b border-white/5 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <th className="p-3 sm:p-4 text-left w-[38%]">Feature</th>
                     <th className="p-3 sm:p-4 text-center text-indigo-400">ResumeATS</th>
-                    <th className="p-3 sm:p-4 text-center">Jobscan</th>
-                    <th className="p-3 sm:p-4 text-center">ResumeWorded</th>
-                    <th className="p-3 sm:p-4 text-center">Teal</th>
+                    <th className="p-3 sm:p-4 text-center">Typical paid tool</th>
+                    <th className="p-3 sm:p-4 text-center">Template-first builder</th>
+                    <th className="p-3 sm:p-4 text-center">Tracker-first platform</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -517,13 +528,13 @@ export default function HomePage() {
                         {row.us ? <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" /> : <span className="text-slate-600">—</span>}
                       </td>
                       <td className="p-3 sm:p-4 text-center">
-                        {row.jobscan ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500/60 text-sm">✗</span>}
+                        {row.paidTools ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500/60 text-sm">✗</span>}
                       </td>
                       <td className="p-3 sm:p-4 text-center">
-                        {row.resumeworded ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500/60 text-sm">✗</span>}
+                        {row.templateBuilders ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500/60 text-sm">✗</span>}
                       </td>
                       <td className="p-3 sm:p-4 text-center">
-                        {row.teal ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500/60 text-sm">✗</span>}
+                        {row.jobTrackers ? <CheckCircle2 className="w-4 h-4 text-slate-500 mx-auto" /> : <span className="text-red-500/60 text-sm">✗</span>}
                       </td>
                     </tr>
                   ))}
@@ -532,9 +543,9 @@ export default function HomePage() {
                   <tr className="bg-indigo-500/[0.04] border-t border-indigo-500/15">
                     <td className="p-3 sm:p-4 text-slate-400 text-xs font-semibold">Price</td>
                     <td className="p-3 sm:p-4 text-center text-indigo-400 text-xs font-bold">FREE</td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$49.95/mo</td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$29/mo</td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">$9/mo</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">Often paid</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">Usually paid</td>
+                    <td className="p-3 sm:p-4 text-center text-slate-500 text-xs">Often freemium</td>
                   </tr>
                 </tfoot>
               </table>

@@ -18,6 +18,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog/ats-resume-keywords-guide`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.75 },
     { url: `${BASE}/blog/what-is-ats-score`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.75 },
     { url: `${BASE}/blog/resume-formatting-for-ats`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/blog/jobscan-alternatives-free`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.7 },
   ];
 }
