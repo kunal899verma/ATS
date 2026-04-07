@@ -45,11 +45,6 @@ export default function AnalyzePage() {
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [hasBrowserData, setHasBrowserData] = useState(false);
 
-  // Cookie gate disabled — allow unlimited free checks
-  // useEffect(() => {
-  //   const alreadyUsed = document.cookie.includes("ats_free_used=1");
-  //   if (alreadyUsed && !session) setShowAuthGate(true);
-  // }, [session]);
   useEffect(() => {
     setHasBrowserData(hasSavedBrowserData());
   }, []);

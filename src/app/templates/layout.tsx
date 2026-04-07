@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/seo";
 
@@ -15,6 +16,6 @@ export const metadata: Metadata = createPageMetadata({
   ],
 });
 
-export default function TemplatesLayout({ children }: LayoutProps<"/templates">) {
+export default function TemplatesLayout({ children }: { children: ReactNode }) {
   return children;
 }

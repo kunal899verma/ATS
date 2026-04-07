@@ -1,7 +1,5 @@
 /**
- * User data store — works immediately via Vercel logs.
- * For a richer owner dashboard, analytics events are also mirrored to Blob storage
- * when BLOB_READ_WRITE_TOKEN is configured.
+ * User data store — analytics events are written to Supabase.
  */
 
 import { createVisitorId, writeAnalyticsEvent } from "@/lib/visitor-analytics";
@@ -65,19 +63,6 @@ export async function saveUser(user: UserRecord): Promise<void> {
     ip: user.ip,
   });
 
-  // ── Example persistent storage adapters (optional) ────────────────────────
-  // import { kv } from "@vercel/kv";
-  // const key = `user:${user.email}`;
-  // const existing = await kv.hget(key, "email");
-  // if (!existing) {
-  //   await kv.hset(key, { ...user, analysisCount: 0 });
-  //   await kv.zadd("users:by_signup", { score: Date.now(), member: user.email });
-  // }
-
-  // ── Supabase (uncomment after: npm i @supabase/supabase-js) ───────────────
-  // import { createClient } from "@supabase/supabase-js";
-  // const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
-  // await supabase.from("users").upsert(user, { onConflict: "email" });
 }
 
 /**

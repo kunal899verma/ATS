@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/seo";
 
@@ -8,6 +9,6 @@ export const metadata: Metadata = createPageMetadata({
   noIndex: true,
 });
 
-export default function ResultsLayout({ children }: LayoutProps<"/results">) {
+export default function ResultsLayout({ children }: { children: ReactNode }) {
   return children;
 }

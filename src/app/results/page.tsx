@@ -96,6 +96,12 @@ export default function ResultsPage() {
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedSuggestionId, setCopiedSuggestionId] = useState<string | null>(null);
   const [githubData, setGithubData] = useState<GitHubAnalysis | null>(null);
+  const [kwFixLoading, setKwFixLoading] = useState<string | null>(null);
+  const [kwFixes, setKwFixes] = useState<Record<string, string>>({});
+  const [bulletRewriteLoading, setBulletRewriteLoading] = useState<string | null>(null);
+  const [bulletRewrites, setBulletRewrites] = useState<Record<string, string>>({});
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [generatedSummary, setGeneratedSummary] = useState<string | null>(null);
   const [scoreRevealed, setScoreRevealed] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
   const [hasBrowserData, setHasBrowserData] = useState(false);
@@ -228,6 +234,65 @@ export default function ResultsPage() {
     setTimeout(() => {
       setCopiedSuggestionId((current) => (current === key ? null : current));
     }, 1800);
+  };
+
+  const handleKeywordFix = async (keyword: string) => {
+    if (kwFixes[keyword] || kwFixLoading) return;
+    const resumeText = sessionStorage.getItem("atsResumeText") ?? "";
+    const jobDescription = sessionStorage.getItem("atsJobDescription") ?? "";
+    setKwFixLoading(keyword);
+    try {
+      const res = await fetch("/api/ai/keyword-fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText, missingKeywords: [keyword], jobDescription }),
+      });
+      const text = await res.text();
+      setKwFixes((prev) => ({ ...prev, [keyword]: text }));
+    } catch {
+      setKwFixes((prev) => ({ ...prev, [keyword]: "Could not generate suggestion. Try again." }));
+    } finally {
+      setKwFixLoading(null);
+    }
+  };
+
+  const handleRewriteBullet = async (suggestionId: string, bullet: string) => {
+    if (bulletRewrites[suggestionId] || bulletRewriteLoading) return;
+    const jobDescription = sessionStorage.getItem("atsJobDescription") ?? "";
+    setBulletRewriteLoading(suggestionId);
+    try {
+      const res = await fetch("/api/ai/rewrite-bullet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bullet, jobDescription }),
+      });
+      const text = await res.text();
+      setBulletRewrites((prev) => ({ ...prev, [suggestionId]: text }));
+    } catch {
+      setBulletRewrites((prev) => ({ ...prev, [suggestionId]: "Could not rewrite. Try again." }));
+    } finally {
+      setBulletRewriteLoading(null);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    if (generatedSummary || summaryLoading) return;
+    const resumeText = sessionStorage.getItem("atsResumeText") ?? "";
+    const jobDescription = sessionStorage.getItem("atsJobDescription") ?? "";
+    setSummaryLoading(true);
+    try {
+      const res = await fetch("/api/ai/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText, jobDescription }),
+      });
+      const text = await res.text();
+      setGeneratedSummary(text);
+    } catch {
+      setGeneratedSummary("Could not generate summary. Try again.");
+    } finally {
+      setSummaryLoading(false);
+    }
   };
 
   const [buildingResume, setBuildingResume] = useState(false);
@@ -710,7 +775,8 @@ export default function ResultsPage() {
 
               <div className="divide-y divide-white/3">
                 {keywords.map((km) => (
-                  <div key={km.keyword} className="flex items-center justify-between px-5 py-3 hover:bg-white/2 transition-colors">
+                  <div key={km.keyword}>
+                  <div className="flex items-center justify-between px-5 py-3 hover:bg-white/2 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       {km.found ? (
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
@@ -732,7 +798,34 @@ export default function ResultsPage() {
                           : km.importance === "critical" ? "🔴 Critical" : km.importance === "high" ? "🟠 High" : "Missing"
                         }
                       </span>
+                      {!km.found && (
+                        <button
+                          type="button"
+                          onClick={() => handleKeywordFix(km.keyword)}
+                          disabled={kwFixLoading === km.keyword}
+                          className="inline-flex items-center gap-1 rounded-lg border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[11px] font-medium text-violet-300 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+                        >
+                          {kwFixLoading === km.keyword ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                          AI Fix
+                        </button>
+                      )}
                     </div>
+                  </div>
+                  {/* Keyword fix suggestion */}
+                  {!km.found && kwFixes[km.keyword] && (
+                    <div className="mx-5 mb-3 rounded-xl border border-violet-500/20 bg-violet-500/5 p-3">
+                      <p className="text-[10px] text-violet-400 font-semibold uppercase tracking-wider mb-1.5">Suggested addition</p>
+                      <p className="text-slate-300 text-sm leading-relaxed">{kwFixes[km.keyword]}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleCopySuggestionText(`kw-${km.keyword}`, kwFixes[km.keyword])}
+                        className="mt-2 inline-flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300"
+                      >
+                        {copiedSuggestionId === `kw-${km.keyword}` ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        {copiedSuggestionId === `kw-${km.keyword}` ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  )}
                   </div>
                 ))}
               </div>
@@ -990,6 +1083,37 @@ export default function ResultsPage() {
                                 <p className="text-slate-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{s.example}</p>
                               </div>
                             )}
+
+                            {/* AI Rewrite for suggestions with weak bullet text */}
+                            {s.currentText && (
+                              <div>
+                                {!bulletRewrites[s.id] && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRewriteBullet(s.id, s.currentText ?? "")}
+                                    disabled={bulletRewriteLoading === s.id}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+                                  >
+                                    {bulletRewriteLoading === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                    {bulletRewriteLoading === s.id ? "Rewriting…" : "AI Rewrite ✨"}
+                                  </button>
+                                )}
+                                {bulletRewrites[s.id] && (
+                                  <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3">
+                                    <p className="text-[10px] text-violet-400 font-semibold uppercase tracking-wider mb-1.5">AI Rewrite</p>
+                                    <p className="text-slate-200 text-sm font-mono leading-relaxed whitespace-pre-wrap">{bulletRewrites[s.id]}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopySuggestionText(`${s.id}-rewrite`, bulletRewrites[s.id])}
+                                      className="mt-2 inline-flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300"
+                                    >
+                                      {copiedSuggestionId === `${s.id}-rewrite` ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                      {copiedSuggestionId === `${s.id}-rewrite` ? "Copied" : "Copy"}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1129,6 +1253,44 @@ export default function ResultsPage() {
                   <p className="text-slate-200 text-sm leading-relaxed bg-black/20 rounded-xl p-4 border border-white/5">
                     {aiResult.summaryRewrite}
                   </p>
+                </div>
+
+                {/* Standalone summary generator */}
+                <div className="glass-card p-5 border border-white/[0.06]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-cyan-400" />
+                      <h3 className="text-white font-semibold text-sm">Generate Professional Summary</h3>
+                    </div>
+                  </div>
+                  <p className="text-slate-500 text-xs mb-3">Generate a tailored professional summary based on your resume and the target job description.</p>
+                  {!generatedSummary && (
+                    <button
+                      type="button"
+                      onClick={handleGenerateSummary}
+                      disabled={summaryLoading}
+                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/15 transition-colors disabled:opacity-50"
+                    >
+                      {summaryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                      {summaryLoading ? "Generating…" : "Generate Summary"}
+                    </button>
+                  )}
+                  {generatedSummary && (
+                    <div>
+                      <p className="text-slate-200 text-sm leading-relaxed bg-black/20 rounded-xl p-4 border border-white/5 whitespace-pre-wrap">{generatedSummary}</p>
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          type="button"
+                          onClick={() => handleCopySuggestionText("gen-summary", generatedSummary)}
+                          className="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300"
+                        >
+                          {copiedSuggestionId === "gen-summary" ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          {copiedSuggestionId === "gen-summary" ? "Copied" : "Copy"}
+                        </button>
+                        <button type="button" onClick={() => setGeneratedSummary(null)} className="text-xs text-slate-600 hover:text-slate-400">Regenerate</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Build ATS Resume CTA */}
