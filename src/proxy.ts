@@ -47,15 +47,28 @@ function applyRateLimit(req: NextRequest): NextResponse | null {
 // cannot decrypt them. We check cookie presence here; the real session
 // validation (isAdminEmail, etc.) still happens inside each page via auth().
 const PUBLIC_PREFIXES = [
+  // Auth & API
   "/api/auth",
   "/api/analytics",
   "/_next",
+  // Static / meta files
   "/favicon",
   "/robots",
   "/sitemap",
   "/og",
-  "/login",
   "/google",
+  // Auth pages
+  "/login",
+  // Public marketing & feature pages (must be indexable by Google)
+  "/analyze",
+  "/cover-letter",
+  "/interview-prep",
+  "/templates",
+  "/recruiter",
+  "/blog",
+  "/tips",
+  "/pricing",
+  "/results",
 ];
 const PUBLIC_EXACT = ["/"];
 
