@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://resumeats.app";
+import { SITE_URL, absoluteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,6 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/results"],
       },
     ],
-    sitemap: `${BASE}/sitemap.xml`,
+    sitemap: absoluteUrl("/sitemap.xml"),
+    host: SITE_URL,
   };
 }

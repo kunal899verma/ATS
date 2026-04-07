@@ -3,8 +3,9 @@ import Link from "next/link";
 import { getAllPosts } from "@/lib/blog";
 import { ArrowRight, Clock, Zap, BookOpen } from "lucide-react";
 import Footer from "@/components/layout/Footer";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "ATS Resume Blog — Tips, Guides & Strategies | ResumeATS",
   description:
     "Expert guides on beating ATS systems, resume formatting, keyword strategy, and landing more interviews. Free, research-backed advice.",
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
     "ATS tips", "resume guide", "beat ATS", "resume keywords", "job search tips",
     "ATS resume format", "resume optimization guide",
   ],
-};
+  path: "/blog",
+});
 
 const CATEGORY_COLORS: Record<string, string> = {
   Strategy:  "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",

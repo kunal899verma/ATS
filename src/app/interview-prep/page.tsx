@@ -3,13 +3,15 @@ import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/layout/Footer";
 import InterviewPrepTool from "@/components/ai/InterviewPrepTool";
 import { CheckCircle2, MessageSquare, Sparkles } from "lucide-react";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title:
     "AI Interview Question Generator — Practice with AI Coach | ResumeATS",
   description:
     "Get AI-generated interview questions tailored to your resume and target role. Practice with an AI coach that gives personalized feedback — free.",
-};
+  path: "/interview-prep",
+});
 
 export default function InterviewPrepPage() {
   return (

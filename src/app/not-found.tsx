@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/ui/Navbar";
 import { Zap, ArrowRight, Home } from "lucide-react";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "404 — Page Not Found | ResumeATS",
   description: "The page you were looking for does not exist.",
-  robots: "noindex",
-};
+  noIndex: true,
+});
 
 export default function NotFound() {
   return (

@@ -5,8 +5,9 @@ import CoverLetterGenerator from "@/components/ai/CoverLetterGenerator";
 import { FadeIn } from "@/components/ui/FadeIn";
 import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
 import { CheckCircle2, FileText, Sparkles } from "lucide-react";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Free AI Cover Letter Generator — Tailored to Any Job | ResumeATS",
   description:
     "Generate a tailored, ATS-optimized cover letter in 30 seconds. Paste a job description, choose your tone, and let AI craft the perfect cover letter — free.",
@@ -18,7 +19,8 @@ export const metadata: Metadata = {
     "job application cover letter",
     "tailored cover letter",
   ],
-};
+  path: "/cover-letter",
+});
 
 export default function CoverLetterPage() {
   return (

@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import Providers from "@/components/Providers";
 import { ToastProvider } from "@/components/ui/Toast";
 import { PageTracker } from "@/components/analytics/PageTracker";
+import { ROOT_METADATA } from "@/lib/seo";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -28,30 +29,7 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600"],
 });
 
-export const metadata: Metadata = {
-  title: "ResumeATS — Free AI Resume Checker, Cover Letter Generator & ATS Score Analyzer",
-  description:
-    "Get your resume's ATS compatibility score in 5 seconds. AI-powered keyword analysis, cover letter generation, interview prep, section scoring, recruiter readability — all free, no account needed.",
-  keywords: [
-    "ATS resume checker", "ATS score", "resume scanner", "keyword analysis",
-    "resume optimizer", "job application", "ATS compatibility", "resume score",
-    "free resume checker", "applicant tracking system", "AI cover letter generator",
-    "interview prep", "resume builder", "AI resume coach",
-  ],
-  authors: [{ name: "ResumeATS" }],
-  robots: "index, follow",
-  openGraph: {
-    title: "ResumeATS — Free AI Resume Checker & Career Platform",
-    description: "AI-powered ATS scoring, cover letter generation, interview prep, and resume building. Free, instant, no account required.",
-    type: "website",
-    siteName: "ResumeATS",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "ResumeATS — Free AI Resume Checker & Career Platform",
-    description: "ATS score, AI cover letters, interview prep — all free, in seconds.",
-  },
-};
+export const metadata: Metadata = ROOT_METADATA;
 
 export const viewport: Viewport = {
   width: "device-width",

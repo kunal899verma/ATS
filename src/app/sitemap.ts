@@ -1,22 +1,26 @@
 import type { MetadataRoute } from "next";
+import { getAllPosts } from "@/lib/blog";
+import { absoluteUrl } from "@/lib/site";
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://resumeats.app";
-
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const posts = await getAllPosts();
+
   return [
-    { url: BASE, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${BASE}/analyze`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE}/cover-letter`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE}/interview-prep`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE}/templates`, lastModified: now, changeFrequency: "monthly", priority: 0.85 },
-    { url: `${BASE}/recruiter`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/tips`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/pricing`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE}/blog/how-to-beat-ats-resume-scanners`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.75 },
-    { url: `${BASE}/blog/ats-resume-keywords-guide`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.75 },
-    { url: `${BASE}/blog/what-is-ats-score`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.75 },
-    { url: `${BASE}/blog/resume-formatting-for-ats`, lastModified: new Date("2026-03-10"), changeFrequency: "monthly", priority: 0.7 },
+    { url: absoluteUrl("/"), lastModified: now, changeFrequency: "weekly", priority: 1 },
+    { url: absoluteUrl("/analyze"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: absoluteUrl("/cover-letter"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: absoluteUrl("/interview-prep"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: absoluteUrl("/templates"), lastModified: now, changeFrequency: "monthly", priority: 0.85 },
+    { url: absoluteUrl("/recruiter"), lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: absoluteUrl("/tips"), lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: absoluteUrl("/pricing"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: absoluteUrl("/blog"), lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    ...posts.map((post) => ({
+      url: absoluteUrl(`/blog/${post.slug}`),
+      lastModified: new Date(post.publishedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.75,
+    })),
   ];
 }

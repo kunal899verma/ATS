@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, getPost } from "@/lib/blog";
 import { ArrowLeft, Clock, ArrowRight, Zap } from "lucide-react";
+import { createPageMetadata } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
@@ -19,23 +21,20 @@ export async function generateMetadata({
   const { slug } = await params;
   try {
     const { metadata: meta } = await getPost(slug);
-    return {
+    return createPageMetadata({
       title: `${meta.title} | ResumeATS`,
       description: meta.description,
-      openGraph: {
-        title: meta.title,
-        description: meta.description,
-        type: "article",
-        publishedTime: meta.publishedAt,
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: meta.title,
-        description: meta.description,
-      },
-    };
+      path: `/blog/${slug}`,
+      type: "article",
+      publishedTime: meta.publishedAt,
+    });
   } catch {
-    return { title: "Blog | ResumeATS" };
+    return createPageMetadata({
+      title: "Blog | ResumeATS",
+      description: "Read ResumeATS guides and ATS optimization articles.",
+      path: "/blog",
+      noIndex: true,
+    });
   }
 }
 
@@ -67,8 +66,10 @@ export default async function BlogPostPage({
     headline: meta.title,
     description: meta.description,
     datePublished: meta.publishedAt,
-    author: { "@type": "Organization", name: "ResumeATS", url: "https://resumeats.app" },
-    publisher: { "@type": "Organization", name: "ResumeATS", url: "https://resumeats.app" },
+    url: absoluteUrl(`/blog/${slug}`),
+    mainEntityOfPage: absoluteUrl(`/blog/${slug}`),
+    author: { "@type": "Organization", name: "ResumeATS", url: absoluteUrl("/") },
+    publisher: { "@type": "Organization", name: "ResumeATS", url: absoluteUrl("/") },
   };
 
   return (

@@ -7,8 +7,9 @@ import { FadeIn } from "@/components/ui/FadeIn";
 import { StaggerGroup, StaggerItem } from "@/components/ui/StaggerGroup";
 import { GlowCard } from "@/components/ui/GlowCard";
 import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "ATS Resume Tips — How to Beat Applicant Tracking Systems",
   description:
     "Practical, research-backed tips to get your resume past ATS filters and into recruiter hands. Keyword strategies, formatting rules, section guidance, and common mistakes.",
@@ -16,7 +17,8 @@ export const metadata: Metadata = {
     "ATS tips", "beat ATS", "ATS resume tips", "applicant tracking system tips",
     "resume keywords", "ATS formatting", "resume optimization", "ATS resume guide",
   ],
-};
+  path: "/tips",
+});
 
 const TIPS = [
   {

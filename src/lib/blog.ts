@@ -25,6 +25,8 @@ async function loadMDX(slug: string): Promise<MDXModule> {
       return import("../content/blog/what-is-ats-score.mdx") as Promise<MDXModule>;
     case "resume-formatting-for-ats":
       return import("../content/blog/resume-formatting-for-ats.mdx") as Promise<MDXModule>;
+    case "jobscan-alternatives-free":
+      return import("../content/blog/jobscan-alternatives-free.mdx") as Promise<MDXModule>;
     default:
       throw new Error(`Unknown blog slug: ${slug}`);
   }
@@ -35,6 +37,7 @@ const SLUGS = [
   "ats-resume-keywords-guide",
   "what-is-ats-score",
   "resume-formatting-for-ats",
+  "jobscan-alternatives-free",
 ] as const;
 
 export async function getAllPosts(): Promise<BlogPost[]> {

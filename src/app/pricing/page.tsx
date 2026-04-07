@@ -11,11 +11,13 @@ import { FadeIn } from "@/components/ui/FadeIn";
 import { StaggerGroup, StaggerItem } from "@/components/ui/StaggerGroup";
 import { GlowCard } from "@/components/ui/GlowCard";
 import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "ResumeATS Pricing — 100% Free ATS Resume Checker | ResumeATS",
   description: "ResumeATS is completely free — unlimited ATS analyses, AI cover letters, interview prep, and resume building in one workflow.",
-};
+  path: "/pricing",
+});
 
 const FREE_FEATURES = [
   { icon: BarChart3, text: "Unlimited ATS analyses" },

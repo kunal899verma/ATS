@@ -149,10 +149,11 @@ export default function ResultsPage() {
 
   const handleShare = async () => {
     if (!result) return;
+    const shareUrl = `${window.location.origin}/analyze`;
     const text = `I scored ${result.overallScore}/100 (Grade ${result.grade}) on my ATS resume check!\n\n` +
       `✅ ${result.keywordAnalysis.matchedKeywords.length} keywords matched\n` +
       `❌ ${result.keywordAnalysis.missingKeywords.length} keywords missing\n\n` +
-      `Check yours free at: https://resumeats.app`;
+      `Check yours free at: ${shareUrl}`;
     try {
       await navigator.clipboard.writeText(text);
       setShareState("copied");

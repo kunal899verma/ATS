@@ -13,12 +13,15 @@ import {
   FileText, Sparkles, Eye,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "ResumeATS — Free AI Resume Checker, Cover Letter Generator & ATS Score Analyzer",
   description:
     "Check your resume's ATS score instantly. AI-powered keyword analysis, cover letter generation, interview prep, recruiter readability — free, no account required.",
-};
+  path: "/",
+});
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -217,7 +220,7 @@ export default function HomePage() {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "ResumeATS",
-    url: "https://resumeats.app",
+    url: absoluteUrl("/"),
     description: "Free AI-powered ATS resume checker with cover letter generation, interview prep, and career intelligence.",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Any",
