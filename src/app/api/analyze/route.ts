@@ -185,7 +185,11 @@ export async function POST(req: NextRequest) {
     const analyzedAt = new Date().toISOString();
 
     if (session?.user?.email) {
-      // Track analysis for signed-in users
+      const geo = getGeoDetails(req.headers);
+      const ua = req.headers.get("user-agent");
+      const { browser, deviceType, os } = parseUserAgent(ua);
+      const visitorId = req.cookies.get(VISITOR_COOKIE_NAME)?.value ?? createVisitorId();
+
       await trackAnalysis({
         email: session.user.email,
         score: result.overallScore,
@@ -193,6 +197,11 @@ export async function POST(req: NextRequest) {
         detectedRole: result.detectedRole ?? "unknown",
         inputMode: pastedText ? "paste" : "file",
         analyzedAt,
+        visitorId,
+        ...geo,
+        browser,
+        deviceType,
+        os,
       });
     } else {
       // Track analysis for anonymous users — extract contact info from resume

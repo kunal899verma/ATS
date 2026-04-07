@@ -14,6 +14,13 @@ export interface UserRecord {
   phone?: string;
   provider: string;
   signedUpAt: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  browser?: string;
+  deviceType?: AnalyticsEvent["deviceType"];
+  os?: string;
+  ip?: string;
 }
 
 export interface AnalysisRecord {
@@ -23,11 +30,20 @@ export interface AnalysisRecord {
   detectedRole: string;
   inputMode: string;
   analyzedAt: string;
+  visitorId?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  browser?: string;
+  deviceType?: AnalyticsEvent["deviceType"];
+  os?: string;
+  timezone?: string;
+  language?: string;
+  screenResolution?: string;
 }
 
 /** Called on every new sign-in. Logs to Vercel deployment logs. */
 export async function saveUser(user: UserRecord): Promise<void> {
-  // Visible in Vercel Dashboard → Logs → search "NEW_USER"
   console.log("[NEW_USER]", JSON.stringify(user));
   await writeAnalyticsEvent({
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -40,6 +56,13 @@ export async function saveUser(user: UserRecord): Promise<void> {
     userPhone: user.phone,
     provider: user.provider,
     signUpAt: user.signedUpAt,
+    country: user.country,
+    region: user.region,
+    city: user.city,
+    browser: user.browser,
+    deviceType: user.deviceType,
+    os: user.os,
+    ip: user.ip,
   });
 
   // ── Example persistent storage adapters (optional) ────────────────────────
@@ -145,19 +168,27 @@ export async function trackAnonymousAnalysis(record: AnonymousAnalysisRecord): P
 
 /** Called after each resume analysis (for logged-in users). */
 export async function trackAnalysis(record: AnalysisRecord): Promise<void> {
-  // Visible in Vercel Dashboard → Logs → search "USER_ANALYSIS"
   console.log("[USER_ANALYSIS]", JSON.stringify(record));
   await writeAnalyticsEvent({
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     type: "analysis",
     createdAt: record.analyzedAt,
-    visitorId: createVisitorId(),
+    visitorId: record.visitorId ?? createVisitorId(),
     userEmail: record.email,
     userName: record.email,
     score: record.score,
     grade: record.grade,
     detectedRole: record.detectedRole,
     inputMode: record.inputMode,
+    country: record.country,
+    region: record.region,
+    city: record.city,
+    browser: record.browser,
+    deviceType: record.deviceType,
+    os: record.os,
+    timezone: record.timezone,
+    language: record.language,
+    screenResolution: record.screenResolution,
   });
 
   // ── Example persistent storage adapter ────────────────────────────────────
