@@ -1,4 +1,4 @@
-import { get, list, put } from "@vercel/blob";
+import { list, put } from "@vercel/blob";
 
 export const VISITOR_COOKIE_NAME = "ats_visitor_id";
 const ANALYTICS_PREFIX = "analytics/events";
@@ -230,7 +230,7 @@ export async function writeAnalyticsEvent(event: AnalyticsEvent) {
 
   try {
     await put(buildEventPath(event), JSON.stringify(event), {
-      access: "private",
+      access: "public",
       contentType: "application/json",
       token,
       addRandomSuffix: false,
@@ -241,25 +241,13 @@ export async function writeAnalyticsEvent(event: AnalyticsEvent) {
   }
 }
 
-async function readAnalyticsEvent(pathname: string) {
-  const token = getBlobToken();
-  if (!token) return null;
-
+async function readAnalyticsEvent(url: string) {
   try {
-    const result = await get(pathname, {
-      access: "private",
-      token,
-      useCache: false,
-    });
-
-    if (!result || result.statusCode !== 200 || !result.stream) {
-      return null;
-    }
-
-    const raw = await new Response(result.stream).text();
-    return JSON.parse(raw) as AnalyticsEvent;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as AnalyticsEvent;
   } catch (error) {
-    console.error("[ANALYTICS_READ_ERROR]", { pathname, error });
+    console.error("[ANALYTICS_READ_ERROR]", { url, error });
     return null;
   }
 }
@@ -290,7 +278,7 @@ export async function getRecentAnalyticsEvents(limit = 120) {
       .sort((a, b) => b.pathname.localeCompare(a.pathname))
       .slice(0, limit);
 
-    const events = await Promise.all(recent.map((blob) => readAnalyticsEvent(blob.pathname)));
+    const events = await Promise.all(recent.map((blob) => readAnalyticsEvent(blob.url)));
     return events.filter((event): event is AnalyticsEvent => Boolean(event));
   } catch (error) {
     console.error("[ANALYTICS_LIST_ERROR]", error);
