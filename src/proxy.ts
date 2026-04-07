@@ -55,6 +55,7 @@ const PUBLIC_PREFIXES = [
   "/sitemap",
   "/og",
   "/login",
+  "/google",
 ];
 const PUBLIC_EXACT = ["/"];
 
