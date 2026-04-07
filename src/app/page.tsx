@@ -23,6 +23,43 @@ export const metadata: Metadata = createPageMetadata({
   path: "/",
 });
 
+// ─── FAQ Data ─────────────────────────────────────────────────────────────────
+
+const FAQ_ITEMS = [
+  {
+    q: "Is ResumeATS really free?",
+    a: "Yes, 100% free — no credit card, no trial period, no account required. Every feature including ATS scoring, keyword analysis, cover letter generation, and interview prep is completely free to use unlimited times.",
+  },
+  {
+    q: "What is a good ATS score?",
+    a: "A score of 70 or above is considered competitive. Scores of 85+ are top-tier and highly likely to pass automated screening. Most career coaches recommend hitting at least 75 before submitting an application.",
+  },
+  {
+    q: "What file formats does ResumeATS accept?",
+    a: "You can upload a PDF or DOCX file, or simply paste your resume text directly. Text-based PDFs and Word documents work best. Scanned PDFs and design-tool exports (Canva, Figma) may not parse correctly.",
+  },
+  {
+    q: "How is ResumeATS different from Jobscan?",
+    a: "ResumeATS is free with no scan limits, requires no account, and includes synonym-aware keyword matching (so 'JS' counts for 'JavaScript') and a Recruiter Readability Score. Jobscan costs $49.95/month and only does exact-match keyword analysis.",
+  },
+  {
+    q: "Does the ATS score guarantee I'll get an interview?",
+    a: "No tool can guarantee interviews — but a higher ATS score means your resume is far more likely to reach a human recruiter. Most resumes are filtered automatically before anyone reads them. Improving your score directly improves your odds.",
+  },
+  {
+    q: "How long does the analysis take?",
+    a: "Typically 5–10 seconds. The analysis checks 25+ factors including keyword match, section scoring, formatting compatibility, recruiter readability, and role detection.",
+  },
+  {
+    q: "Can I use it for any job or industry?",
+    a: "Yes. ResumeATS works for any role — software engineering, data science, product management, marketing, finance, healthcare, and more. Paste the specific job description and the analysis tailors to that role's keywords and requirements.",
+  },
+  {
+    q: "How often should I check my ATS score?",
+    a: "Check your score every time you apply to a new role. Each job posting has different keywords and priorities. A resume that scores 85 for one company may score 55 for another. Tailoring takes 15–20 minutes and significantly improves your callbacks.",
+  },
+];
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const PAIN_POINTS = [
@@ -602,6 +639,47 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+              </StaggerItem>
+            ))}
+          </StaggerGroup>
+        </div>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────────────────── */}
+      <section className="relative py-24">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": FAQ_ITEMS.map((item) => ({
+                "@type": "Question",
+                "name": item.q,
+                "acceptedAnswer": { "@type": "Answer", "text": item.a },
+              })),
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeIn>
+            <div className="text-center mb-14">
+              <p className="text-cyan-400 text-xs font-semibold tracking-[0.2em] uppercase mb-3">FAQ</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
+                Frequently Asked Questions
+              </h2>
+            </div>
+          </FadeIn>
+          <StaggerGroup className="space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <StaggerItem key={item.q}>
+                <details className="group glass-card border border-white/[0.06] rounded-2xl overflow-hidden">
+                  <summary className="flex items-center justify-between gap-4 cursor-pointer px-6 py-5 text-white font-medium text-sm sm:text-base select-none list-none">
+                    {item.q}
+                    <span className="text-slate-500 group-open:rotate-45 transition-transform duration-200 flex-shrink-0 text-xl leading-none">+</span>
+                  </summary>
+                  <p className="px-6 pb-5 text-slate-400 text-sm leading-relaxed border-t border-white/[0.04] pt-4">{item.a}</p>
+                </details>
               </StaggerItem>
             ))}
           </StaggerGroup>
