@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/server";
 
 export const VISITOR_COOKIE_NAME = "ats_visitor_id";
 
@@ -211,6 +211,7 @@ export async function writeAnalyticsEvent(event: AnalyticsEvent) {
   console.log("[ANALYTICS_EVENT]", JSON.stringify(event));
 
   try {
+    const supabase = await createClient();
     const { error } = await supabase.from("analytics_events").insert({
       id: event.id,
       type: event.type,
@@ -250,6 +251,7 @@ export async function writeAnalyticsEvent(event: AnalyticsEvent) {
 
 export async function getRecentAnalyticsEvents(limit = 200) {
   try {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("analytics_events")
       .select("*")
