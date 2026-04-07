@@ -1,7 +1,6 @@
-import { list, put } from "@vercel/blob";
+import { supabase } from "@/lib/supabase";
 
 export const VISITOR_COOKIE_NAME = "ats_visitor_id";
-const ANALYTICS_PREFIX = "analytics/events";
 
 export type AnalyticsEventType = "page_view" | "sign_in" | "analysis";
 
@@ -115,12 +114,8 @@ function createEmptySnapshot(configured = isAnalyticsStorageConfigured(), storag
   };
 }
 
-function getBlobToken() {
-  return process.env.BLOB_READ_WRITE_TOKEN;
-}
-
 export function isAnalyticsStorageConfigured() {
-  return Boolean(getBlobToken());
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
 }
 
 export function createVisitorId() {
@@ -212,74 +207,91 @@ export function parseUserAgent(userAgent?: string | null) {
   return { browser, deviceType: deviceType as AnalyticsEvent["deviceType"], os };
 }
 
-function buildEventPath(event: AnalyticsEvent) {
-  const timestamp = event.createdAt.replace(/[:.]/g, "-");
-  const date = new Date(event.createdAt);
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-
-  return `${ANALYTICS_PREFIX}/${year}/${month}/${day}/${timestamp}-${event.id}.json`;
-}
-
 export async function writeAnalyticsEvent(event: AnalyticsEvent) {
   console.log("[ANALYTICS_EVENT]", JSON.stringify(event));
 
-  const token = getBlobToken();
-  if (!token) return;
-
   try {
-    await put(buildEventPath(event), JSON.stringify(event), {
-      access: "public",
-      contentType: "application/json",
-      token,
-      addRandomSuffix: false,
-      cacheControlMaxAge: 60,
+    const { error } = await supabase.from("analytics_events").insert({
+      id: event.id,
+      type: event.type,
+      created_at: event.createdAt,
+      visitor_id: event.visitorId,
+      pathname: event.pathname,
+      referrer: event.referrer,
+      title: event.title,
+      country: event.country,
+      region: event.region,
+      city: event.city,
+      ip: event.ip,
+      browser: event.browser,
+      device_type: event.deviceType,
+      user_agent: event.userAgent,
+      os: event.os,
+      user_email: event.userEmail,
+      user_name: event.userName,
+      user_image: event.userImage,
+      user_phone: event.userPhone,
+      provider: event.provider,
+      score: event.score,
+      grade: event.grade,
+      detected_role: event.detectedRole,
+      input_mode: event.inputMode,
+      language: event.language,
+      timezone: event.timezone,
+      screen_resolution: event.screenResolution,
+      sign_up_at: event.signUpAt,
+      is_anonymous: event.isAnonymous,
     });
+    if (error) console.error("[ANALYTICS_STORAGE_ERROR]", error);
   } catch (error) {
     console.error("[ANALYTICS_STORAGE_ERROR]", error);
   }
 }
 
-async function readAnalyticsEvent(url: string) {
+export async function getRecentAnalyticsEvents(limit = 200) {
   try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return null;
-    return (await res.json()) as AnalyticsEvent;
-  } catch (error) {
-    console.error("[ANALYTICS_READ_ERROR]", { url, error });
-    return null;
-  }
-}
+    const { data, error } = await supabase
+      .from("analytics_events")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-export async function getRecentAnalyticsEvents(limit = 120) {
-  const token = getBlobToken();
-  if (!token) return [];
-
-  try {
-    const blobs = [];
-    let cursor: string | undefined;
-
-    while (blobs.length < limit) {
-      const page = await list({
-        token,
-        prefix: `${ANALYTICS_PREFIX}/`,
-        limit: Math.min(limit, 100),
-        cursor,
-      });
-
-      blobs.push(...page.blobs);
-
-      if (!page.hasMore || !page.cursor) break;
-      cursor = page.cursor;
+    if (error) {
+      console.error("[ANALYTICS_LIST_ERROR]", error);
+      return [];
     }
 
-    const recent = blobs
-      .sort((a, b) => b.pathname.localeCompare(a.pathname))
-      .slice(0, limit);
-
-    const events = await Promise.all(recent.map((blob) => readAnalyticsEvent(blob.url)));
-    return events.filter((event): event is AnalyticsEvent => Boolean(event));
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      type: row.type as AnalyticsEventType,
+      createdAt: row.created_at,
+      visitorId: row.visitor_id,
+      pathname: row.pathname,
+      referrer: row.referrer,
+      title: row.title,
+      country: row.country,
+      region: row.region,
+      city: row.city,
+      ip: row.ip,
+      browser: row.browser,
+      deviceType: row.device_type,
+      userAgent: row.user_agent,
+      os: row.os,
+      userEmail: row.user_email,
+      userName: row.user_name,
+      userImage: row.user_image,
+      userPhone: row.user_phone,
+      provider: row.provider,
+      score: row.score,
+      grade: row.grade,
+      detectedRole: row.detected_role,
+      inputMode: row.input_mode,
+      language: row.language,
+      timezone: row.timezone,
+      screenResolution: row.screen_resolution,
+      signUpAt: row.sign_up_at,
+      isAnonymous: row.is_anonymous,
+    })) as AnalyticsEvent[];
   } catch (error) {
     console.error("[ANALYTICS_LIST_ERROR]", error);
     return [];
@@ -301,7 +313,14 @@ function formatDevice(event: AnalyticsEvent) {
   return [event.browser, event.deviceType].filter(Boolean).join(" · ") || "Unknown";
 }
 
+// Cache snapshot for 5 minutes to avoid re-reading all blobs on every dashboard visit
+let snapshotCache: { snapshot: AnalyticsSnapshot; expiresAt: number } | null = null;
+
 export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapshot> {
+  if (snapshotCache && Date.now() < snapshotCache.expiresAt) {
+    return snapshotCache.snapshot;
+  }
+
   try {
     const events = await getRecentAnalyticsEvents(limit);
 
@@ -454,7 +473,7 @@ export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapsh
       }
     }
 
-    return {
+    const snapshot: AnalyticsSnapshot = {
       configured: isAnalyticsStorageConfigured(),
       recentEvents: events,
       totalEvents: events.length,
@@ -468,6 +487,8 @@ export async function getAnalyticsSnapshot(limit = 120): Promise<AnalyticsSnapsh
       recentUsers: [...users.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 12),
       unregisteredUsers: [...unregistered.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 50),
     };
+    snapshotCache = { snapshot, expiresAt: Date.now() + 5 * 60 * 1000 };
+    return snapshot;
   } catch (error) {
     console.error("[ANALYTICS_SNAPSHOT_ERROR]", error);
     return createEmptySnapshot(isAnalyticsStorageConfigured(), "Analytics storage is temporarily unavailable.");

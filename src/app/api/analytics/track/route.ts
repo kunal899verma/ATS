@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  writeAnalyticsEvent,
   getGeoDetails,
   maskIp,
   parseUserAgent,
@@ -25,26 +24,17 @@ export async function POST(req: NextRequest) {
     const existingVisitorId = req.cookies.get(VISITOR_COOKIE_NAME)?.value;
     const visitorId = existingVisitorId ?? createVisitorId();
 
-    await writeAnalyticsEvent({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      type: "page_view",
-      createdAt: new Date().toISOString(),
+    // Only persist sign_in and analysis events to Blob to stay within operation limits.
+    // Page views are logged to console only (visible in Vercel Logs).
+    console.log("[PAGE_VIEW]", JSON.stringify({
       visitorId,
       pathname: pathname ?? "/",
-      referrer: referrer || undefined,
-      title: title || undefined,
       ...geo,
-      ip,
       browser,
       deviceType,
       os,
-      userAgent: ua ?? undefined,
       userEmail: session?.user?.email ?? undefined,
-      userName: session?.user?.name ?? undefined,
-      screenResolution: screenResolution || undefined,
-      timezone: timezone || undefined,
-      language: language || undefined,
-    });
+    }));
 
     const res = NextResponse.json({ ok: true });
 
